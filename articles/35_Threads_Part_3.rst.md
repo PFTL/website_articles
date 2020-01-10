@@ -218,7 +218,7 @@ def download_page(queue_downloads, queue_pages, event):
         req = request.Request('https://en.wikipedia.org'+url, headers=headers)
         response = request.urlopen(req)
         data = response.read().decode('utf-8')
-        soup = BeautifulSoup(data, 'html.parser')
+        soup = BeautifulSoup(data, 'html.parser')   
         body = soup.find('div', id='bodyContent')
         links = []
         for alink in body.find_all('a'):
