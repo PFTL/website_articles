@@ -1,29 +1,12 @@
----
-author:
-- Aquiles Carattino
-date: '2018-05-22'
-description: A guide to build a device to acquire data
-header: '{attach}daniel-cheung-129841-unsplash.jpg'
-status: draft
-subtitle: Learn how to program an Arduino to practice your Python skills
-tags: 'Arduino, tutorial, beginner, devices, DAQ, instrument'
-title: Build a device to practice your skills
----
+Using Python to communicate with an Arduino
+===========================================
 
-When learning how to build software for controlling hardware, it is very
-important to start off easy and build on complexity later on. Moreover,
-with lab equipment it is very important to be able to develop in
-parallel to the use of the instruments. You don't want to freeze the use
-of a machine because you are testing your newly acquired skills. Having
-affordable and accessible devices is therefore crucial to speed up your
-development cycle.
+Arduinos may be one of the most disruptive electronic developments of the past decade. They opened a world of possibilities to quickly prototype solutions in professional settings but also opened the door for enthusiasts to learn about electronics and micro controllers. In this article we are going to see how to get started with an Arduino board and how to control it from a computer using Python. 
 
-In this tutorial, we are going to cover how to use an Arduino as a
-general purpose DAQ card. Since you communicate with the Arduino through
-the serial port, you can use it as many other message-based devices
-already available in the lab. We are going to provide step-by-step
-instructions to build the device and a basic Python interface to acquire
-some data from it.
+An Arduino is an electronics board packaging a micro-controller unit plus passive elements to ensure proper functioning, and headers to be able to interface with the real world very simply. But Arduinos are not just the electronics, they are also the ecosystem around them, including the software needed to program them as one sees fit.
+
+In order to get started, we assume you have access to an Arduino, such as the Uno, but most of the available ones are going to work fine. The Nano, Micro, Due, Mega, they all have different specifications, but the way you program and interface with them is more or less the same. In this article we are not going to discuss about electronics and how to build circuits, but just about the software side, so you can follow along even if you don't have an Arduino board at hand. 
+
 
 About the Arduino
 =================
