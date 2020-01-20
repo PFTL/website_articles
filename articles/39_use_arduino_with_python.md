@@ -100,10 +100,53 @@ Serial.write("Switching ON\n");
 This discussion is important, because we are not forced to use the new line character, we could have used anything we wanted. If you pay attention to the serial monitor window, you see there are some options regarding the line ending. We are going to keep the ``\n`` but be aware that other programs and other hardware may use a different character.  
 
 ## Controlling the LED
-Right now the LED is switching independently from what we do with the computer. So now it is time to be able to control the LED at our own will from the computer. And probably you have anticipated it already, we are going to use the ``Serial`` communication, but reading from it instead of just writing to it. Before going through a lengthier discussion on how to do things properly, let's quickly make it work, see the code below:
+Right now the LED is switching independently from what we do with the computer. So now it is time to be able to control the LED at our own will from the computer. And probably you have anticipated it already, we are going to use the ``Serial`` communication, but reading from it instead of just writing to it. Before going through a lengthier discussion on how to do things properly, let's quickly make a ping-pong program, i.e. one that replies with the same message we send:
 
 ```c
+int val;
 
+void setup() {
+  Serial.begin(19200);
+}
+
+void loop() {
+  if (Serial.available() > 0){
+    val = Serial.read();
+    Serial.write(val);
+    Serial.write("\n");
+  }
+}
+```
+
+What you have to pay attention to is that we first define ``val`` as an integer. In the ``loop``, we first check whether there is any serial data available. If there is, we read from it and write it back. We also write a newline, so things appear nicely formatted. 
+
+If you open the serial monitor, you can now send messages to your device, and it will write them back to you. There are several things to notice here, first, what happens if you send a character such as an ``a`` instead of a number? Surprisingly, you get the same character back. Even though ``val`` is an integer, it gets converted to a character when writing on the serial. 
+
+The second thing you have to see is what happens if you write several letters and then you press enter. You will see that every character gets a new line. This means that the ``read`` method is getting byte by byte. You can try a lot of different things, such as what happens if you send non-ascii characters, if you put delays, etc. The fact that is so easy to play around with all the parameters can help you understand how serial communication works. 
+
+### Controlling the LED
+So, we know how to send a message to the Arduino and how to do something with the received message. We must now go one step further and change the LED to on or off based on the message we send. 
+
+```c
+int val;
+
+void setup() {
+  Serial.begin(19200);
+}
+
+void loop() {
+  if (Serial.available() > 0){
+    val = Serial.read();
+    Serial.write(val);
+    Serial.write("\n");
+    if(val==49){
+      Serial.write("ON\n");
+      }
+    if(val==48){
+      Serial.write("OFF\n");
+      }
+  }
+}
 ```
 
 ## Reading a signal
