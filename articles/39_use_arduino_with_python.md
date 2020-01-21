@@ -125,7 +125,7 @@ If you open the serial monitor, you can now send messages to your device, and it
 The second thing you have to see is what happens if you write several letters and then you press enter. You will see that every character gets a new line. This means that the ``read`` method is getting byte by byte. You can try a lot of different things, such as what happens if you send non-ascii characters, if you put delays, etc. The fact that is so easy to play around with all the parameters can help you understand how serial communication works. 
 
 ### Controlling the LED
-So, we know how to send a message to the Arduino and how to do something with the received message. We must now go one step further and change the LED to on or off based on the message we send. 
+So, we know how to send a message to the Arduino and how to do something with the received message. We must now go one step further and change the LED to on or off based on the message we send. Let's quickly see a possible program to achieve it:
 
 ```c
 int val;
@@ -137,7 +137,27 @@ void setup() {
 void loop() {
   if (Serial.available() > 0){
     val = Serial.read();
-    Serial.write(val);
+    Serial.write("\n");
+    if(val==1){
+      Serial.write("ON\n");
+      }
+    if(val==0){
+      Serial.write("OFF\n");
+      }
+  }
+}
+```
+
+The program above will only write back to us whether we are switching on or off through the serial communication. We do this because it makes it very easy to debug. If something is not working we can check whether is the program or the electronics that are giving problems. After you upload the code above, and you try it, you will notice that it is not working. Can you guess why? 
+
+We have seen earlier that the serial read gets bytes out of the communication. This means, that if we send a ``1``, it will be transformed into bytes, which will be received by the Arduino and then transformed back into a 1. It is not worth pending too much time on this topic at this stage, but it all relates to encoding characters. You can take a look at the [ascii table](https://www.asciitable.com/) and notice that if you encode the character ``1``, you will get the bytes corresponding to the number 49, i.e.: ``110001``. 
+
+The serial communication works by actually sending bite by bite of information in the form of a square wave. If the square wave is up corresponds to a 1, if it stays low, it is a 0, and so forth. Of course, to build a byte you need to have a fixed number of bits, or we would have problems knowing when one byte finished and the next started. Anyways, if we change the program above, we can use the information on the ascii table:
+
+```c
+void loop() {
+  if (Serial.available() > 0){
+    val = Serial.read();
     Serial.write("\n");
     if(val==49){
       Serial.write("ON\n");
@@ -148,13 +168,176 @@ void loop() {
   }
 }
 ```
+If you test it, you will see that this is working fine. If you send a 1, the serial will get the ``ON`` message, and the opposite if you send a 0. However, is this useful? I would argue strongly against it since it is very hard to understand the comparison to ``49`` and to ``48``. The best would be to change the value you are reading into a string, or an integer which we can compare. For simplicity let's just focus on converting to an integer, we just need to change the line in which we read and the comparison lines:
+
+```c
+void loop() {
+  if (Serial.available() > 0){
+    int val = char(Serial.read())-'0';
+    Serial.println(val);
+    Serial.write("\n");
+    if(val == 1){
+      Serial.write("ON\n");
+      }
+    if(val == 0){
+      Serial.write("OFF\n");
+      }
+  }
+}
+```
+As you see, the way in which we change from bytes to an integer is slightly convoluted. We exploit the fact that characters are essentially numbers, and that they are in order on the ascii table. If we subtract the 0, we will start counting at the proper position. Nonetheless, the code shown above works. If we send a 1 to the arduino we get the proper message back. To switch ON/OFF the LED, we just need to add the proper instructions. The final code would look like this:
+
+```c
+void setup() {
+  Serial.begin(19200);
+  Serial.flush();
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+
+void loop() {
+  if (Serial.available() > 0){
+    int val = char(Serial.read())-'0';
+    Serial.println(val);
+    Serial.write("\n");
+    if(val == 1){
+      Serial.write("ON\n");
+      digitalWrite(LED_BUILTIN, HIGH);  
+      }
+    if(val == 0){
+      Serial.write("OFF\n");
+      digitalWrite(LED_BUILTIN, LOW);
+      }
+  }
+}
+```
+Now you are effectively switching ON/OFF an LED from the computer. I don't know about you, but I find this incredibly rewarding. Probably your head is already branching out to different possibilities. There is only one more topic to cover before we move into Python. 
 
 ## Reading a signal
+Arduinos allow you to interact with the world not only by setting parameters, such as an LED, on or off, but also by reading values from the environment. Normally, you would need some sensor in order to make a valuable reading, but we are just going to read noise, so we don't worry about having a sensor at hand, and without worrying about going out of range. Let's quickly see how to get an analog signal:
+
+```
+int analogPin = A0;
+int val = 0;  
+
+void setup() {
+  Serial.begin(19200);
+}
+
+void loop() {
+  val = analogRead(analogPin);
+  Serial.println(val);
+}
+```
+The only part of the code which may not be self-explanatory is the first line. ``A0`` represents the input port we are reading, in this case is the analog port number 0. Almost all Arduino boards have analog inputs to read, the amount, however, can change. You can run the program above and see that there are a lot of numbers appearing on screen. 
+
+If you move the board, and especially if you touch the pins from below, you will see that these numbers can change. Interesting, don't you think? It is up to you, at this stage, to come with an explanation on why this happens. 
+
+Probably you noticed also that we are using ``println`` instead of ``write``. This is handy because we can then forget about the line ending. We are almost done with the introduction to the arduino, we have just to cover a detail.
 
 ## Triggering a measurement
-    
+Up to now, we used the serial input just to switch the LED on or off. We can use exactly the same approach to read the analog channel. It really takes no time to implement, the full code would be:
+
+```c
+int analogPin = A0;
+int val = 0;
+
+void setup() {
+  Serial.begin(19200);
+  Serial.flush();
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    int val = char(Serial.read()) - '0';
+    if (val == 1) {
+      Serial.write("ON\n");
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
+    if (val == 0) {
+      Serial.write("OFF\n");
+      digitalWrite(LED_BUILTIN, LOW);
+    }
+    if (val == 2) {
+      val = analogRead(analogPin);
+      Serial.println(val);
+    }
+  }
+}
+```
+
+Now, if you send a ``1``, the LED switches on, off with a ``0```, and if you send a ``2``, you will get the reading from the analog port number 0. We are all set to go to hook it up to Python. 
+
 ## Reading the Arduino from Python
-- PySerial
+We know how to send command from the serial monitor of the Arduino IDE, but this may be very limiting. Let's see how can we control our Arduino board using Python. In order to control devices, we will need some libraries installed. Perhaps you noticed that we have always been talking about serial communication. Serial is an old standard, which is normally associated with the bulky [RS-232](https://en.wikipedia.org/wiki/RS-232) connectors. Even though the connectors have fallen in disgrace, the protocol for sharing data is as alive as always was. The trick is that the arduino has a built-in chip that transforms the USB port into a Serial device. Little trick that saves a lot of effort when programming the boards. 
+
+So, let's first get the basic library we need, **pyserial**:
+
+```bash
+pip install pyserial
+```
+
+This is the basic building blog for communicating with serial devices on Python. Be extra careful because there is another library called **serial** which has nothing to do with serial communication. 
+
+Now that we have it installed, we can test it, by making it list all the serial devices connected to our computer:
+
+```bash
+python -m serial.tools.list_ports
+```
+ 
+ The output depends on your operating system, if you are on Windows, this is what you would get something like:
+ 
+```bash
+COM4
+1 ports found
+```
+
+If you are on Linux or Mac, something like:
+
+```bash
+/dev/ttyACM0
+1 ports found
+```
+The name of the port you are getting is the same you should have used when developing with the Arduino IDE. However, it may also be that if you plug/unplug the board, reboot the computer, etc. it changes. Note the port name, since we are going to use it extensively, and you will need to replace it on your own code. 
+
+Let's move to a Python script now, that allows us to switch on and off the LED. We start by importing the needed libraries and opening the communication with the device:
+
+```python
+import serial
+
+dev = serial.Serial("COM4", baudrate=19200)
+```
+
+Two important things in the simple code above. First, you should replace ``COM4`` by the serial port you got earlier. The second, the baudrate is given by the Arduino program we developed in the previous sections. We could have used 9600, and there is no a-priory way of knowing. You are left to the documentation of the hardware in order to know what is the proper baudrate to communicate. Not even the serial monitor is able to pick it up automatically. 
+
+And now, to the juicy part. Let's switch on and off an LED:
+
+```python
+from time import sleep
+
+dev.write(b'1')
+sleep(1)
+dev.write(b'0')
+sleep(1)
+dev.write(b'1')
+``` 
+I know, I know, could have been much much better! You can have a for loop, accept input, etc. You probably remember that every time we were setting the LED, there was a message confirming it, right? So we can also quickly read from the Arduino:
+
+```python
+dev.write(b'1')
+print(dev.readline())
+sleep(1)
+dev.write(b'0')
+print(dev.readline())
+sleep(1)
+dev.write(b'1')
+print(dev.readline())
+``` 
+
+Now, at this stage is when things get really messy. Are you seeing the output you are expecting? Probably not. Especially if you updated the code, but never rebooted the Arduino. This happens because messages accumulate on a buffer, and you read whatever is available. Antoher thing that can happen
+
+
+
 - Triggering a measurement (read/write=Query)
 - PyVISA
 
