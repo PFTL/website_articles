@@ -300,50 +300,199 @@ If you are on Linux or Mac, something like:
 ```
 The name of the port you are getting is the same you should have used when developing with the Arduino IDE. However, it may also be that if you plug/unplug the board, reboot the computer, etc. it changes. Note the port name, since we are going to use it extensively, and you will need to replace it on your own code. 
 
-Let's move to a Python script now, that allows us to switch on and off the LED. We start by importing the needed libraries and opening the communication with the device:
+Let's move to Python now. 
+
+Start a Python console so we can start playing with our board. We start by importing the needed libraries and opening the communication with the device:
+
+```pycon
+>>> import serial
+>>> dev = serial.Serial("COM4", baudrate=19200)
+```
+
+!!! warning
+    If you already established communication to the board from another application, such as the Serial Monitor of the Arduino IDE, you will probably get an error saying the resource is busy. Close any application communicating with the board and start again
+
+Two important things in the simple code above. First, you should replace ``COM4`` by the serial port you got earlier. The second, the baudrate is given by the Arduino program we developed in the previous sections. We could have programmed the Arduino to work at 9600, and there is no a-priory way of knowing. You are left to the documentation of the hardware in order to know what is the proper baudrate to communicate. Not even the serial monitor of the Arduino IDE is able to pick it up automatically. 
+
+And now, to the juicy part. Let's switch on and off an LED:
+
+```pycon
+>>> dev.write(b'1')
+>>> dev.write(b'0')
+>>> dev.write(b'1')
+``` 
+
+I know, I know, could have been much much better! You can have a for loop, accept input, etc. It is important to note that we are using a ``b`` in front of the command we are sending. This is to tell Python to *encode* the string before sending it. Remember that Arduino works with bytes, and therefore we must tell Python to transform a string to bytes before sending it. Without entering into the discussion of what encoding characters mean, another way of doing the same is by explicitly using the ``encode`` method:
+
+```pycon
+>>> data = '1'
+>>> data.encode('ascii')
+b'1'
+```
+
+Here we are selecting ``ascii`` to encode, we could have used other encoding options, for example:
+
+```pycon
+data.encode('utf-8')
+b'1'
+data.encode('utf-16')
+b'\xff\xfe1\x00'
+```
+
+Now you see, if we use UTF-8, the representation is the same as using ascii, while if we use UTF-16, it is radically different. Anyways, Arduinos work with ascii characters, and therefore we should stick to them. 
+
+You probably remember that every time we were setting the LED, there was a message confirming it. So we can also quickly read from the Arduino:
+
+```pycon
+>>> dev.write(b'1')
+>>> print(dev.readline())
+``` 
+
+Now, at this stage is when things can get really messy. I decided not to show you the output of the print on purpose. Are you seeing the output you are expecting? Probably not. This happens because messages accumulate on a buffer, and you read whatever is available. You can try to use the ``readline()`` several times and you will see that the output keeps changing... Until it doesn't work anymore. When you use ``readline()``, Python will wait until there is a line to read (something that ends with a ``\n``.) If your program hangs waiting for data, you can press ``Ctrl``+``C`` in order to stop the execution. 
+
+Now we can move what we learned to a Python script:
 
 ```python
 import serial
 
+
 dev = serial.Serial("COM4", baudrate=19200)
-```
+dev.write(b'1')
+print(dev.readline())
+dev.write(b'0')
+print(dev.readline())
+dev.write(b'1')
+print(dev.readline())
+``` 
 
-Two important things in the simple code above. First, you should replace ``COM4`` by the serial port you got earlier. The second, the baudrate is given by the Arduino program we developed in the previous sections. We could have used 9600, and there is no a-priory way of knowing. You are left to the documentation of the hardware in order to know what is the proper baudrate to communicate. Not even the serial monitor is able to pick it up automatically. 
-
-And now, to the juicy part. Let's switch on and off an LED:
+If you run this program, probably it will hang forever. The LED will not blink, nor the message will be printed to screen. This happens because we write to the device before it is ready to receive commands. Therefore, in the following step, when we try to read from it, nothing will be displayed. This can be easily solved by adding a delay after opening the communication with the board (some lines were removed for clarity):
 
 ```python
 from time import sleep
 
-dev.write(b'1')
+dev = serial.Serial("COM4", baudrate=19200)
 sleep(1)
-dev.write(b'0')
-sleep(1)
-dev.write(b'1')
-``` 
-I know, I know, could have been much much better! You can have a for loop, accept input, etc. You probably remember that every time we were setting the LED, there was a message confirming it, right? So we can also quickly read from the Arduino:
+```
+
+Now we can make our LED blink, we can also read the analog signal, this time let's make it a bit more sophisticated, using a loop:
 
 ```python
-dev.write(b'1')
-print(dev.readline())
-sleep(1)
-dev.write(b'0')
-print(dev.readline())
-sleep(1)
-dev.write(b'1')
-print(dev.readline())
-``` 
+data = []
+for _ in range(10):
+    dev.write(b'2')
+    line = dev.readline()
+    data.append(line)
 
-Now, at this stage is when things get really messy. Are you seeing the output you are expecting? Probably not. Especially if you updated the code, but never rebooted the Arduino. This happens because messages accumulate on a buffer, and you read whatever is available. Antoher thing that can happen
+print(data)
+```
 
+And we will get an output like this:
 
+```bash
+[b'493\r\n', b'502\r\n', b'499\r\n', b'495\r\n', b'495\r\n', b'496\r\n', b'496\r\n', b'492\r\n', b'490\r\n', b'490\r\n']
+```
 
-- Triggering a measurement (read/write=Query)
-- PyVISA
+First, note that the output are all strings prepended with a ``b``. We can get read of it if we know how to encode/decode the strings. We so earlier that we were encoding strings as *ascii*, therefore, we can do the opposite:
 
-## Better Arduino code
-- Clearer read/write/output
-    
-## Driver with Python
-- Building a class to interface with the Arduino
+```python
+data.append(line.decode('ascii'))
+```
 
+However, we still see the end of line. You see we are getting '\r\n', which corresponds to the output of the ``Serial.println(val);`` on the Arduino code. Pay attention to the fact that println uses that specific line ending, which is two characters long. It is very easy to remove, I'm splitting it to several lines for clarity:
+
+```python
+line = dev.readline()
+line = line.decode('ascii')
+line = line.strip()
+```
+
+And now we got just the numbers as strings... Of course, if you would like to use the numbers, you should translate them, in our case they are integers, so we can do:
+
+```python
+line = int(line.decode('ascii'))
+```
+Which will take care of stripping the new line characters for us.
+
+## Querying the device
+Perhaps you have noticed in the previous examples that we are always following the same flow: We write to the device, we read back from the device. This can be called querying a device. This is how many commercial devices work, but it is not mandatory. For example, we could have the Arduino writing to the serial port continuously, and whenever we start reading from it, we will get the data out. However, this flow was not triggered from the computer. What you want to achieve with the board is up to you, here we stick to the querying approach. 
+
+Since we are going to repeat this over and over, we can abstract this cycle to a method in a class. Something reasonable would be:
+
+```python
+class Arduino:
+    def __init__(self, port):
+        self.dev = serial.Serial(port, baudrate=19200)
+        sleep(1)
+
+    def query(self, message):
+        self.dev.write(message.encode('ascii'))
+        line = self.dev.readline().decode('ascii').strip()
+        return line
+```
+
+And then, to repeat the steps from before, including the LED blinking:
+
+```python
+ard = Arduino('COM4')
+
+for _ in range(10):
+    print(ard.query('1'))
+    sleep(0.5)
+    print(ard.query('0'))
+    sleep(0.5)
+
+data = []
+for _ in range(10):
+    data.append(ard.query('2'))
+
+print(data)
+```
+
+It was on purpose that the change to integers was not added to the ``query`` method: it works only if you are getting an integer. Arduino can output other information, such as ``ON`` or ``OFF`` when changing the LED. Remember that you have absolute control. If you just want to output integers, specifying that 10 means LED on, and 22 means LED OFF, then it is up to you and what you judge best for your application. 
+
+What you can see is that once you abstract some common patterns into a class, the rest of the code becomes much clearer. Of course, if you see something like ``query('1')`` you have no idea what it means unless you have access to the device documentation. All this can be greatly improved, there are a lot of standards in the industry, and just common sense can take you a long way ahead. 
+
+## PyVISA
+The last topic I would like to cover in this tutorial is that, as you may have guessed, a lot of devices follow the same patterns, not only those connecting through the serial port, but also through USB, TCP/IP, GPIB, etc. Also, different brands produce the same type of devices, for example, you can get two oscilloscopes from different brands, etc. Standardizing the way you can communicate with those devices makes developing software much easier, since once you have a solution, you can use it even if you change your instrument. 
+
+The standard most companies follow, is called VISA, which stands for Virtual instrument software architecture. VISA allows to abstract a lot of the work done by software into standard packages. Without entering into too much detail, we can use this standard directly from Python. You have to install only two packages:
+
+```bash
+pip install pyvisa pyvisa-py
+```
+
+It is important to note that pyvisa relies on having a backend on your computer. There are several backend available which should be interchangeable provided that they follow the VISA standards. A popular one is the National Instruments VISA, or the Tektronix VISA library. To avoid going through the trouble of installing them, we opted for the pure python implementation of the VISA standard, called ``pyvisa-py``. Quickly, just to show you how it works with our very basic Arduino board:
+
+```pycon
+>>> import visa
+>>> rm = visa.ResourceManager('@py')
+>>> rm.list_resources()
+('ASRLCOM4::INSTR',)
+```
+This last line will change according to your operating system and the port where the board is connected. Check that we still get the ``COM4`` in between the information, because it is actually the same. And then we just use it:
+
+```pycon
+>>> inst = rm.open_resource('ASRLCOM4::INSTR', baud_rate=19200)
+>>> print(inst.query('2'))
+442
+```
+
+And you see that we got a value without the ``b`` nor the line endings. This means that the people at PyVISA took care of implementing the same features, and even more! For example, check what happens if you query a value that we didn't implement in Arduino:
+
+```pycon
+>>> inst.query('3')
+...
+pyvisa.errors.VisaIOError: VI_ERROR_TMO (-1073807339): Timeout expired before operation completed
+```
+You will see that instead of hanging forever, such as would be the case in our custom class, visa is able to stop and warn us that a timeout happened. If you head over to the [pyVISA documentation](https://pyvisa.readthedocs.io/en/latest/introduction/index.html) you will learn that there is almost nothing out of your control. Would you like to make longer timeouts? Just modify the value of the instrument:
+
+```pycon
+>>> inst.timeout = 5000
+```
+
+This sets the timeout to 5 seconds, and you can immediately see that if you run the command from before it will take longer to raise an Exception. I strongly encourage you to go over the pyVISA documentation, because that would also give you a lot of inspiration on how to design your board's software to accept commands from the computer.
+
+## Conclusions
+Arduinos open a complete new world of possibilities. The main difficulty is that you have to plan your code from two different perspectives: the board and the computer. You need to decide what information you want to take out of your board and into the computer, and how you are going to ask for that information. The more complex the expectation, the more important it is to structure your code in a smart way. 
+
+The examples we have shown in this article are extremely basic and do not follow best practices. For example, you can check the [Arduino code](https://github.com/PFTL/SimpleDaq/blob/master/extras/arduino_firmware/arduino_firmware.ino) that runs on the devices I use for the [Python for the Lab Workshops](https://www.pythonforthelab.com/courses/python-for-the-lab). Or [this example](https://github.com/aquilesC/DisperPy/blob/master/dispertech/controller/devices/arduino/arduino_driver/arduino_driver.ino) in which I control several LEDs, two temperature sensors and a two axis piezo stage. If you are working with an Arduino and want to learn more on how you can communicate with it from Python, leave a message below, I would really like to hear about what you are doing and how I can help you achieve it!
