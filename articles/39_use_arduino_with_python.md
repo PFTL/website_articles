@@ -312,7 +312,7 @@ Start a Python console so we can start playing with our board. We start by impor
 !!! warning
     If you already established communication with the board from another application, such as the Serial Monitor of the Arduino IDE, you will probably get an error saying the resource is busy. Close any application communicating with the board and start again
 
-Two important things in the simple code above. First, you should replace ``COM4`` by the serial port you got earlier. The second, the baud rate is given by the Arduino program we developed in the previous sections. We could have programmed the Arduino to work at 9600, and there is no a-priory way of knowing. You are left to the documentation of the hardware to know what is the proper baud rate to communicate. Not even the serial monitor of the Arduino IDE can pick it up automatically. 
+Two important things in the sample code above. First, you should replace ``COM4`` by the serial port you got earlier. The second, the baud rate is given by the Arduino program we developed in the previous sections. We could have programmed the Arduino to work at 9600, and there is no a-priory way of knowing. You are left to the documentation of the hardware to know what is the proper baud rate to communicate. Not even the serial monitor of the Arduino IDE can pick it up automatically. 
 
 And now, to the juicy part. Let's switch on and off an LED:
 
@@ -398,7 +398,7 @@ First, note that the output is all strings prepended with a ``b``. We can get re
 data.append(line.decode('ascii'))
 ```
 
-However, we still see the end of the line. You see we are getting '\r\n', which corresponds to the output of the ``Serial.println(val);`` on the Arduino code. Pay attention to the fact that println uses that specific line ending, which is two characters long. It is very easy to remove, I'm splitting it to several lines for clarity:
+However, we still see the end of the line. You see we are getting '\r\n', which corresponds to the output of the ``Serial.println(val);`` on the Arduino code. Pay attention to the fact that ``println`` uses that specific line ending, which is two characters long. It is very easy to remove, I'm splitting it to several lines for clarity:
 
 ```python
 line = dev.readline()
@@ -492,6 +492,15 @@ You will see that instead of hanging forever, such as would be the case in our c
 
 This sets the timeout to 5 seconds, and you can immediately see that if you run the command from before it will take longer to raise an Exception. I strongly encourage you to go over the pyVISA documentation, because that would also give you a lot of inspiration on how to design your board's software to accept commands from the computer.
 
+## Next Steps
+Be aware that the code above, even if it does not have bugs, will have a lot of problems if you keep using it in larger projects. We didn't take care of line endings, for example. We always assumed commands to be just one byte (a ``1``, a ``2``, etc.) but this is not realistic. Imagine if you would like the Arduino to acquire a variable number of values of the analog signal and return the average. You will need to find a smarter approach to sharing information between the computer and the board. 
+
+!! warning 
+  This article is meant to get you started, not to be a comprehensive guide on how to interact with the Arduino boards
+  
+One thing you can do is to decide which character ends a command. A standard is to use ``\n``, the newline. Then, you can read the serial port from the Arduino, until that character appears and then you know the command is done. This gives you a lot of flexibility if you want to send commands of variable length. For example, imagine you want to acquire 10 or 100 data points, a possible command would be ``ACQ:10``, or ``ACQ:100``. From the board perspective, since each character comes sequentially, how would it know that it was a 10, but nothing else is coming after it? 
+
+Another useful strategy to make your commands clear is to use a separator, such as ``:``. Imagine you want to read a digital channel, a command could be ``DI:1``, of Digital Input, number 1. To set a digital output: ``DO:2:1`` meaning setting the Digital Output number 2 to the value of ``1``. However, you see that they start to be harder to read. What about ``DO:CH2:1``. Then, I believe is much clearer. This means you should update the input command to ``DI:CH1``. This allows you to grow the commands without conflicts if you know what you will need at a later stage. 
 
 ## Conclusions
 Arduinos open a completely new world of possibilities. The main difficulty is that you have to plan your code from two different perspectives: the board and the computer. You need to decide what information you want to take out of your board and into the computer, and how you are going to ask for that information. The more complex the expectation, the more important it is to structure your code smartly. 
