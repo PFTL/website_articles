@@ -217,9 +217,9 @@ test_unpack(*vars)
 Which would produce the following output:
 
 ```python
+2
 1
 3
-2
 ```
 
 Now you have a broad idea of how the `*` and `**` operators work to pack
