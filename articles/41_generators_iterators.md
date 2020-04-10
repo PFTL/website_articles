@@ -590,4 +590,7 @@ The main difference would be that an iterator just returns values as they are, w
 For example, if I am acquiring images from a Camera, I would say I am using a generator. The images are not available beforehand, nor I know how they are going to look like. On the other hand, if I am reviewing the frames of data stored on the hard drive, I would try to use the word iterator, because the data is already there and I am not altering it. 
 
 ## Conclusions
-Iterators and Generators are two tools that are very handy to keep in your repository of strategies when planning code. Especially when you are dealing with 
+Iterators and Generators are two tools that are very handy to keep in your repository of strategies when planning code. Especially when you are dealing with streams of data that may exceed the memory you have available. In the past we have seen how to create [your own classes supporting context managers](https://www.pythonforthelab.com/blog/the-with-command-and-custom-classes/), with generators and iterators now you can support loops and iterations. 
+
+Understanding generators is important not only to be able to add it to your own code, but also to be able to understand the logic behind other packages. If you quickly search around, Django uses [plenty of generators in its code base](https://github.com/django/django/search?q=yield&unscoped_q=yield), and the fact that you can understand generators also gives you a hint to how the developer was expecting you to use their code. 
+
