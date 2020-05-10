@@ -1,0 +1,420 @@
+# Data Descriptors: Bringing Attributes to the Next level
+
+## Properties are Descriptors
+Once you fully embrace the object oriented nature of Python, there is a high chance that you cross interesting tools, such as the @propery decorator. Let's quickly see an example of how it works and what it can do for us:
+
+```python
+class MyClass:
+    _var = 0
+
+    @property
+    def var(self):
+        print('Getting Var')
+        return self._var
+```
+
+```pycon
+>>> my_class = MyClass()
+>>> print(my_class.var)
+Getting Var
+0
+```
+
+We can see that by using the ``@property`` decorator, we have changed the behavior of a method, ``var`` to look like an attribute of the class ``MyClass``. We wen't one step further, and we actually added some extra functionality: whenever we read the value of ``var``, a line will be printed to the screen informing us about it. This pattern have very interesting possibilities, that we will discuss in the rest of the article. 
+
+As a side note, Python does not have *private* attributes. It means that whatever we define in a class can be access and modified also from outside of it. Using the underscore for ``_var`` is just a way of signaling other developers that they should not change ``_var`` directly, but that it should be changed only within the class itself. IDE's such as PyCharm will warn us if we ever try to alter one such variable, but there is nothing more that we can do. 
+
+Before we move to more complicated topics, there is something worth mentioning. In the enthusiasm of learning a new topic sometiems important considerations are overlooked. Whenever we encounter code that looks like this:
+
+```pycon
+>>> my_class.var
+```
+
+We actually expect execution to be close to instantaneous. If, for example, the method ``var`` includes connecting to a remote server and fetching information, the behavior of the program would become tougher to anticipate. It is hard to draw a line between clarity and usefulness. Always keep in mind that there is nothing that descriptors can do that can't be achieved with plain methods. 
+
+Getting a value is less than half what properties can do. The other half is setting a value. The syntax is  straightforward:
+
+```python
+class MyClass:
+    _var = 0
+
+    @property
+    def var(self):
+        print('Getting var')
+        return self._var
+
+    @var.setter
+    def var(self, value):
+        print('Setting var')
+        self._var = value
+```
+
+```pycon
+>>> my_class = MyClass()
+>>> print(my_class.var)
+Getting var
+0
+>>> my_class.var = 2
+Setting var
+>>> print(my_class.var)
+Getting var
+2
+```
+
+When we used the decorator ``@property``, it actually altered the method ``var`` in such a way that we could use itself as a decorator. A fair question at this stage is what do we gain by using properties instead of methods. In my opinion, at this stage, it is only a matter of simplifying how the code looks. Compare this code:
+
+```pycon
+>>> my_class.get_var()
+0
+>>> my_class.set_var(2)
+```
+
+to this one:
+
+```pycon
+>>> print(my_class.var)
+0
+>>> my_class.var = 2
+```
+
+We could argue that the second is easier to read. Properties are very handy when we have a lot of methods for getting and setting values, because they can simplify the interface quite a lot. This happens when we control devices, for example, and each setting has a different method for reading and changing its value. 
+
+Just to have an example of going one step further with properties and their behavior, we can use them to verify that the value we assign to ``var`` is an integer:
+
+```python
+@var.setter
+def var(self, value):
+    print('Setting var')
+    if not isinstance(value, int):
+        raise TypeError('Value must be integer')
+    self._var = value
+```
+
+And we can test it:
+
+```pycon
+>>> my_class.var = 2.0
+[...]
+TypeError: Value must be integer
+```
+
+## Develop your own Descriptors
+Using ``@property`` can extend our options when planning classes in Python, but at some point we need to go beyond the built-in tools. When we defined descriptors, we said that they are objects that define how they are ``get`` and ``set`` from the object that contains them. However, ``var`` does not implement anything like that. The real descriptor is ``@property``. So, let's start by developing our own object that can work in a similar way. 
+
+```python
+class MyDescriptor:
+    _val = 0
+
+    def __get__(self, instance, owner):
+        print('Getting Descriptor')
+        return self._val
+
+    def __set__(self, instance, value):
+        print('Setting Value')
+        self._val = value
+
+
+class MyClass:
+    var = MyDescriptor()
+```
+
+``MyDescriptor`` is a class that defines two methods: ``__get__`` and ``__set__``. Perhaps you can already notice that the methods are very similar to how we defined ``var`` in the previous section. We can use the class like this:
+
+```pycon
+>>> my_class = MyClass()
+>>> my_class.var
+Getting Descriptor
+0
+>>> my_class.var = 2
+Setting Value
+>>> my_class.var
+Getting Descriptor
+2
+```
+
+We are not limited to having only one ``MyDescriptor`` in the class, we can define as many as we need:
+
+```python
+class MyClass:
+    var = MyDescriptor()
+    var1 = MyDescriptor()
+    var2 = MyDescriptor()
+```
+
+In this way we can define as many attributes as we want, all with the same behavior. Every time we read them, a message will be printed, every time we set them, another message will be printed. However useful, this is also pushing us away from how properties work, because we are storing ``_var`` directly in the descriptor and not in the class itself. 
+
+What we would like to achieve is the following behavior:
+
+```python
+class MyClass:
+    _var = 0
+
+    @MyDescriptor
+    def var(self):
+        print('Getting var')
+        return self._var
+```
+
+We need to change ``MyDescriptor`` so we can use it as a decorator. We should also change its ``__get__`` method, so it uses the method defined in the class and not just a standard method defined in the descriptor. 
+
+```python
+class MyDescriptor:
+    def __init__(self, fget):
+        print('Instantiating descriptor')
+        self.fget = fget
+
+    def __get__(self, instance, owner):
+        print('Getting Descriptor')
+        return self.fget(instance)
+```
+
+Notice that we have included an ``__init__`` method that takes one argument: fget. When we develop decorators, the method being decorated will be the first argument. You can check [our article on decorators](https://www.pythonforthelab.com/blog/how-to-use-decorators-part-2/) to learn more. We also had to adapt the ``__get__`` method to use the ``fget`` function. Notice that the first argument of ``fget`` should be ``self``, and that is why we pass ``instance`` as the first argument. 
+
+When we use it, we can have a clear look at the order in which things happen:
+
+```pycon
+>>> from descriptors import *
+Instantiating descriptor
+>>> my_class = MyClass()
+print(my_class.var)
+>>> my_class = MyClass()
+>>> my_class.var
+Getting Descriptor
+Getting var
+0
+```
+
+The instantiation of the descriptor happens at import time. Whenever the python interpreter goes through those lines of code, even if we never instantiate the class, the Descriptor will be instantiated. The rest of the code proceeds as usual, but not that first we get the descriptor, then we run the method for returning ``var``. 
+
+As we saw earlier, this is only half the problem. Once we know how to get a value, we should aso see how to set it. Before we do anything, we can just try:
+
+```pycon
+>>> my_class = MyClass()
+>>> print(my_class.var)
+Getting Descriptor
+0
+>>> my_class.var = 2
+>>> print(my_class.var)
+2
+```
+The first time we access ``var``, we get the two lines printed on screen telling us that both the method and the descriptor worked as expected. However, after we set ``var = 2``, they stop working. This is very interesting, because what happened is that we overwrote the ``var``, which is a descriptor, by a plain integer. We need to prevent this, we can add an explicit ``__set__`` method that raises an exception:
+
+```python
+def __set__(self, instance, value):
+    raise Exception('This is a read-only descriptor')
+```
+
+And with this the problem of overwriting ``var`` goes away. But, we are still far from done. What happens if we actually want to define a setter? Things slowly will get more interesting. We would like to use the following syntax:
+
+```python
+class MyClass:
+    _var = 0
+
+    @MyDescriptor
+    def var(self):
+        return self._var
+
+    @var.setter
+    def var(self, value):
+        self._var = value
+```
+
+Right now, ``var`` is passed as the first argument of ``MyDescriptor``. The only way in which ``setter`` can exist is if it is a method of ``MyDescriptor``. Moreover, we should also store not only ``fget`` but also ``fset`` as attributes. We can start by improving the ``__init__`` and ``__set__`` methods:
+
+```python
+class MyDescriptor:
+    def __init__(self, fget=None, fset=None):
+        print('Instantiating descriptor')
+        self.fget = fget
+        self.fset = fset
+
+    def __set__(self, instance, value):
+        print('Setting Descriptor')
+        self.fset(instance, value)
+```
+
+To quickly use the solution as is, we could define ``var`` with a more explicit syntax:
+
+```python
+class MyClass:
+    _var = 0
+
+    def get_var(self):
+        return self._var
+
+    def set_var(self, value):
+        self._var = value
+
+    var = MyDescriptor(get_var, set_var)
+```
+
+You can go ahead and test it to see that it works, even if it is not what we were after. By the way, the same syntax also works for ``property``. The ``setter`` method looks a bit more magical, but if we break it in parts we can understand it:
+
+```python
+    def setter(self, fset):
+        return type(self)(self.fget, fset)
+```
+
+``setter`` takes one argument, ``fset`` which will be the decorated method. Now, we need to instantiate again the ``MyDecorator``, using the ``fget`` that we already know and passing the ``fset`` which is new. This is where the magic of ``type(self)`` comes into place. It returns the class to which the instance (``self``), belongs, and we can use it in the same way as we would use the ``MyDecorator``. 
+
+This is the only missing part, now we can use the full syntax:
+
+```python
+class MyClass:
+    _var = 0
+    
+    @MyDescriptor
+    def var(self):
+        return self._var
+
+    @var.setter
+    def var(self, value):
+        self._var = value
+
+
+my_class = MyClass()
+print(my_class.var)
+my_class.var = 2
+print(my_class.var)
+```
+
+Of course there are a lot of different options that can be implemented. For example, we could raise an exception of ``fset`` does not exist, such as we did earlier. It would mean that ``var`` is "read-only". We could also define "set-only" properties, etc. But there is something important to discuss before going forward. 
+
+We are using ``MyDescriptor`` as a decorator, and we managed to use ``setter`` without too much effort. Note that we used the name ``var`` for both the get and set methods. This is because Python binds those names to the class. If we use a different name for the setter, for example:
+
+```python
+class MyClass:
+    _var = 0
+
+    @MyDescriptor
+    def var(self):
+        return self._var
+
+    @var.setter
+    def var_setter(self, value):
+        self._var = value
+```
+
+We would end up with two different attributes, ``var`` is read-only, and ``var_setter`` which can be read and set. However, the underlying value, ``_var`` is the same:
+
+```python
+my_class = MyClass()
+print(my_class.var)
+my_class.var_setter = 2
+print(my_class.var_setter)
+print(my_class.var)
+```
+
+The last two lines would print the same value to the screen. Therefore, we must be careful, because using different names is not wrong in itself, but it defeats the purpose of having a clear interface. Before we move on, there is something else that we can implement with what we already know. 
+
+We could use ``MyDescriptor`` to specify some boundaries. If the value we try to set is beyond them, we raise an exception. We would like to be able to have a class that looks like this:
+
+```python
+class MyClass:
+    _var = 0
+
+    @MyDescriptor(val_min=0, val_max=3)
+    def var(self):
+        return self._var
+
+    @var.setter
+    def var(self, value):
+        self._var = value
+```
+
+At this step, it is very important that you are familiar with decorators. If you are not, we recommend you to check [this article](https://www.pythonforthelab.com/blog/how-to-use-decorators-part-2/). Not that we instantiate ``MyDescriptor`` and then we use it as a decorator. The only way in which that can work is if we define the ``__call__`` method. We will also need to change the ``__init__`` in order to accomodate for the limits. The full class would look like this:
+
+```python
+class MyDescriptor:
+    def __init__(self, fget=None, fset=None, val_min=None, val_max=None):
+        print('Instantiating descriptor')
+        self.val_min = val_min
+        self.val_max = val_max
+        self.fget = fget
+        self.fset = fset
+
+    def __call__(self, fget):
+        return type(self)(fget, self.fset, self.val_min, self.val_max)
+
+    def __get__(self, instance, owner):
+        print('Getting Descriptor')
+        return self.fget(instance)
+
+    def __set__(self, instance, value):
+        print('Setting Descriptor')
+        if not self.val_min <= value <= self.val_max:
+            raise ValueError(f'Value must be between {self.val_min} and {self.val_max}')
+        self.fset(instance, value)
+
+    def setter(self, fset):
+        return type(self)(self.fget, fset, self.val_min, self.val_max)
+```
+
+Most of the code is the same, but the flow is very different. The ``__call__`` method allows us to specify how a class can be used after it was instantiated. To understand it a bit better, let's simplify the code:
+
+```python
+class MyDescriptor:
+    def __init__(self, val):
+        self.val = val
+
+    def __call__(self):
+        print(self.val)
+```
+
+And we can use it like this:
+
+```pycon
+>>> my_descriptor = MyDescriptor(1)
+>>> my_descriptor()
+1
+```
+
+With the example above, we can see that ``__call__`` is the method that allows us to use ``MyDescriptor`` as a decorator, even after we have instantiated it. The pattern is the same we used for the ``setter`` method, we just assume that the argument that follows is the *getter* method. 
+
+Back to the full example, the decorator will take care of checking if the value is between the specified range:
+
+```pycon
+>>> my_class = MyClass()
+>>> my_class.var
+Getting Descriptor
+0
+>>> my_class.var = 5
+Setting Descriptor
+[...]
+ValueError: Value must be between 0 and 3
+```
+
+### Only Setters
+In the examples above, both with properties and our custom descriptor, we have always assumed that the getter was going to be defined. However, it is also possible to have descriptors that can only be set, but not retrieved. It is hard to come up with situations in which this could be useful. With a property, it would look like this:
+
+```python
+class MyClass:
+    _var = 0
+
+    def var_setter(self, value):
+        self._var = value
+
+    var = property(None, var_setter)
+```
+
+And with our descriptor it would look like this:
+
+```python
+class MyClass:
+    _var = 0
+
+    var = MyDescriptor(val_min=0, val_max=3)
+
+    @var.setter
+    def var(self, value):
+        self._var = value
+```
+
+You should study the code above to understand why we can use ``MyDescriptor`` both as a decorator and as a normal class. 
+
+The sections above cover the classic approach to descriptors. However, since **Python 3.6**, objects include another method, ``__set_name__`` that allows to easily manipulate the owner of the descriptor. This behavior is where real new opportunities appear in a much more straightforward way of thinking. 
+
+## Accessing the Owner Class with ``set_name``
+
+
+### Taking care of inheritance
