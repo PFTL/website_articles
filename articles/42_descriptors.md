@@ -415,6 +415,108 @@ You should study the code above to understand why we can use ``MyDescriptor`` bo
 The sections above cover the classic approach to descriptors. However, since **Python 3.6**, objects include another method, ``__set_name__`` that allows to easily manipulate the owner of the descriptor. This behavior is where real new opportunities appear in a much more straightforward way of thinking. 
 
 ## Accessing the Owner Class with ``set_name``
+Something that will happen at some point is that you would like to know where an attribute is defined. A possible pattern would be to register certain types of attributes on the class that holds them. For example, imagine you have a device in which you define settings and that you would like to know all the settings contained within that device. To achieve that, you should have attributes that are able to register themselves in the owner class. 
 
+First, let's develop a solution to show what ``__set_name__`` can do, and then we can see the details. The descriptor is very similar to the one we developed earlier: 
+
+```python
+class MyDescriptor:
+    def __init__(self, fget=None, fset=None):
+        print('Instantiating descriptor')
+        self.fget = fget
+        self.fset = fset
+
+    def __set_name__(self, owner, name):
+        print(f'Setting name to {name}')
+        if not hasattr(owner, '_descriptors'):
+            setattr(owner, '_descriptors', [])
+
+        owner._descriptors.append(name)
+
+    def __get__(self, instance, owner):
+        print('Getting Descriptor')
+        return self.fget(instance)
+
+    def __set__(self, instance, value):
+        print('Setting Descriptor')
+        self.fset(instance, value)
+
+    def setter(self, fset):
+        return type(self)(self.fget, fset)
+```
+
+The class to use this descriptor would be the same as before:
+
+```python
+class MyClass:
+    _var = 0
+
+    @MyDescriptor
+    def var(self):
+        return self._var
+
+    @var.setter
+    def var(self, value):
+        self._var = value
+```
+
+And when we actually use it, we will see the behavior: 
+
+```pycon
+>>> from descriptors import MyClass
+Instantiating descriptor
+Instantiating descriptor
+Setting name to var
+>>> my_class = MyClass()
+>>> print(my_class._descriptors)
+['var']
+```
+
+Note that the name was assigned before we instantiated the class. This means that the ``__set_name__`` method had access to the owner class right at the moment of its definition. Finally, we see that we can store all the instances of ``MyDescriptor`` on a list. If we would have more than one, they would all appear there. 
+
+We have chosen a list because it is the most straightforward application, but we could also use a dictionary, for example, to store not only the name but also the latest updated value, or the time of update, and we could use that as a cache for later retrievals. 
+
+What we show here is one of the simplest patterns that can be achieved with ``__set_name__``, but also one of the most useful ones. Being able to register attributes on the owner class is of great help in many applications. 
 
 ### Taking care of inheritance
+The method above has one big problem when dealing with inheritance. Let's quickly see what happens if we have a second class that inherits from ``MyClass``:
+
+```python
+class MyClass:
+    _var = 0
+    _var1 = 1
+
+    @MyDescriptor
+    def var(self):
+        return self._var
+
+    @var.setter
+    def var(self, value):
+        self._var = value
+
+    @MyDescriptor
+    def var1(self):
+        return self._var1
+
+class MyOtherClass(MyClass):
+    _new_var = 2
+
+    @MyDescriptor
+    def new_var(self):
+        return self._new_var
+```
+
+If we look at the list of descriptors, we will see that they are both the same:
+
+```pycon
+>>> my_class = MyClass()
+>>> my_other_class = MyOtherClass()
+>>> my_class._descriptors
+['var', 'var1', 'new_var']
+>>> my_other_class._descriptors
+['var', 'var1', 'new_var']
+```
+
+This is a great time to check out what [mutable and immutable](https://www.pythonforthelab.com/blog/mutable-and-immutable-objects/) data types are in Python. What is happening is that the list of descriptors is mutable, and therefore it is shared. When the child appends a new value, it appears also at the parent class. 
+
+Solving this problem is not trivial, but Hernán Grecco found a [very elegant solution](https://github.com/lantzproject/lantz-core/blob/b30a073296fb86fe652bc90893514e15ffbfe840/lantz/core/feat.py#L106) for Lantz, which I will explain here.  
