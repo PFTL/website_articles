@@ -519,4 +519,86 @@ If we look at the list of descriptors, we will see that they are both the same:
 
 This is a great time to check out what [mutable and immutable](https://www.pythonforthelab.com/blog/mutable-and-immutable-objects/) data types are in Python. What is happening is that the list of descriptors is mutable, and therefore it is shared. When the child appends a new value, it appears also at the parent class. 
 
-Solving this problem is not trivial, but Hernán Grecco found a [very elegant solution](https://github.com/lantzproject/lantz-core/blob/b30a073296fb86fe652bc90893514e15ffbfe840/lantz/core/feat.py#L106) for Lantz, which I will explain here.  
+Solving this problem is not trivial, but Hernán Grecco found a [very elegant solution](https://github.com/lantzproject/lantz-core/blob/b30a073296fb86fe652bc90893514e15ffbfe840/lantz/core/feat.py#L106) for Lantz, which I will explain here.
+ 
+### Taking care of inheritance
+#### Subclassing built-in data types 
+First, we need to discuss something that may seem slightly esoteric for most, which is creating a child object from a standard data-type in Python. As a general rule, if you don't have a good reason to do it, it is probably a good idea to avoid this pattern. However, this time we do have a good reason. It works the same as always, let's assume we want to subclass a list, we do:
+
+```python
+class MyList(list):
+    pass
+
+
+var = MyList([1, 2, 3])
+print(len(var))
+```
+
+``var`` has the same features a normal list has, so we can ``append``, iterate through the objects, etc. But we can now define new attributes to ``MyList``, as we would do with our objects:
+
+```python
+var.my_info = 'This is my info'
+```
+
+It would not have been possible to achieve the same with a plain list. When following this pattern, you should be extra careful not to overwrite methods from the list. For example, the following could lead to errors even though is not incorrect in itself:
+
+```python
+var.append = 'Update'
+```
+
+Before we continue, it is also important to refresh how we can set and get attributes to an object: 
+
+```python
+setattr(var, 'my_info', 'Updated Info')
+getattr(var, 'my_info')
+```
+
+#### Checking ownership
+The general idea to prevent children to propagate information to their parents would be to register the owner class in the list of descriptors itself. Every time a new descriptor is created, it checks whether the list of descriptors and the class that defines it belong to the same owner. If it is the same, then it just appends itself. If it is different, it means is a child creating a descriptor, and instead of appening, it creates a new list. 
+
+We start by creating a custom list:
+
+```python
+class MyList(list):
+    pass
+```
+
+And the secret now is to use this list to register the descriptors. We can add the following to ``MyDescriptor``:
+
+```python
+def __set_name__(self, owner, name):
+    descriptors = getattr(owner, '_descriptors', None)
+    if descriptors is not None:
+        if getattr(descriptors, 'owner_class', None) != owner.__qualname__:
+            owner._descriptors = MyList(descriptors)
+            setattr(owner._descriptors, 'owner_class', owner.__qualname__)
+        owner._descriptors.append(name)
+    else:
+        setattr(owner, '_descriptors', MyList())
+        setattr(owner._descriptors, 'owner_class', owner.__qualname__)
+        owner._descriptors.append(name)
+```
+
+Let's go line by line. First, we check if the owner has a ``_descriptors`` attribute. If it has one, it probably means it was created by another descriptor, but we should check whether it was another descriptor in the same class or in the parent class. We are going to use the attribute ``owner_class`` in the custom list. The dunder ``__qualname__`` returns the *qualified name*, which is the full path to the class (including the ``.``) and therefore should be unique through your program. 
+
+If the registered qualified name is different from the owner's name, it means we are probably dealing with an inheritance. So, we we have to do is create a new ``_descriptors`` attribute. With this we unlink the parent from the child attribute. Right after creating the list, we set the attribute ``owner_class`` to the qualified name of the owner, so it can be used later on. Once we know we are dealing with the proper ``_descriptors``, we append the name of the current descriptor. 
+
+The last block is taking care of the situation where the owner does not have a ``_descriptors`` attribute defined. Depending on what you are building, you may already know that the attribute has to be there. But it has no more complications, it just forces the owner to have a list, with the proper owner class, and then appends the name. 
+
+With the same definition of the classes that we had before, we can check again if we are getting the proper list of descriptors:
+
+```python
+my_class = MyClass()
+my_other_class = MyOtherClass()
+print(my_class._descriptors)
+# ['var', 'var1']
+print(my_other_class._descriptors)
+# ['var', 'var1', 'new_var']
+```
+
+So now you see that inheritance is working only from parent to children, as expected. 
+
+## Conclusions
+We have focused this article on using descriptors as decorators, similar to how @property works. We do believe this is one of the most common patterns for descriptors, but it is by no means the only one. First, you don't need to use them as decorators for methods, they could be attributes directly defined in classes. If you check the [official documentation](https://docs.python.org/3/howto/descriptor.html#static-methods-and-class-methods) you will see examples that drill deeper into manipulating the ``__dict__`` of the objects. This degree of complexity is, however, seldom required, but please let us know in the comments if it can be useful for you. 
+
+The *descriptor protocol* is an incredibly useful tool when you need to manipulate the class where special attributes are defined. A very common situation is what we showed in the last section: registering certain attributes in a list. We could go one step further and define a cache, timeouts, and more. It is not something everyone will need every time, but when you wonder how to have access to the owner class when you are defining an attribute, descriptors are the solution. 
