@@ -1,8 +1,8 @@
 # Differences of Multiprocessing on Windows and Linux
 
-Multiprocessing is a fundamental library if you ever want to speed up your code without leaving Python. When I started working with multiprocessing, I was not aware of the differences between Windows and Linux, which set me back several weeks of development time on a relatively big project. Let's quickly see how multiprocessing works and where Windows and Linux diverge. 
+Multiprocessing is an excellent package if you ever want to speed up your code without leaving Python. When I started working with multiprocessing, I was unaware of the differences between Windows and Linux, which set me back several weeks of development time on a relatively big project. Let's quickly see how multiprocessing works and where Windows and Linux diverge. 
 
-The quickest way of showing how multiprocessing can be used is by running a simple function without blocking the main program:
+The quickest way of showing how to use multiprocessing is to run a simple function without blocking the main program:
 
 ```python
 import multiprocessing as mp
@@ -30,7 +30,7 @@ Starting simple func
 Finishing simple func
 ```
 
-This is exactly what we were expecting. Let's simply go to the core of the problem at hand, let's see how this code behaves: 
+The output is what we were expecting. Let's go to the core of the problem at hand by studying how this code behaves: 
 
 ```python
 import multiprocessing as mp
@@ -71,9 +71,9 @@ Starting simple func
 Finishing simple func
 ```
 
-It does not look like much, except for the second ``Before defining simple_func``, and this different is crucial. On **Linux**, when you start a child process, it is *Forked*. It means that the child process inherits the memory state of the parent process. On Windows (and by default on Mac), however, processes are *Spawned*. This means that a new interpreter starts and the code is executed again. 
+It does not look like much, except for the second ``Before defining simple_func``, and this difference is crucial. On **Linux**, when you start a child process, it is *Forked*. It means that the child process inherits the memory state of the parent process. On Windows (and by default on Mac), however, processes are *Spawned*. It means that a new interpreter starts and the code reruns. 
 
-This explains why if we run the code on Windows we get twice the line ``Before defining simple_func``. As you may have noticed, this could have been much worse if we wouldn't include the ``if __main__`` at the end of the file, let's check it out. On Windows, it produces a very long error, that finishes with:
+It explains why, if we run the code on Windows, we get twice the line ``Before defining simple_func``. As you may have noticed, this could have been much worse if we wouldn't include the ``if __main__`` at the end of the file, let's check it out. On Windows, it produces a very long error, that finishes with:
 
 ```bash
 RuntimeError: 
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     p.join()
 ```
 
-In Windows, it would give an output like this:
+On Windows, it would give an output like this:
 
 ```bash
 Before multiprocessing:
@@ -131,7 +131,7 @@ After multiprocessing:
 0.28832424513226507
 ```
 
-And this brings us to the last topic, and the reason why I lost so much time when had to port code written in Linux to work on Windows. If there is a classic situation in which values change at runtime is when you are working with classes. Objects are meant to hold values, they are not static. So, what happens if you try to run a method of a class on a separate process? Let's start with a very simple task:
+And this brings us to the last topic and the reason why I lost so much time when I had to port code written in Linux to work on Windows. A typical situation in which values change at runtime is when you are working with classes. Objects are meant to hold values; they are not static. So, what happens if you try to run a method of a class on a separate process? Let's start with a straightforward task:
 
 ```python
 import multiprocessing as mp
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     my_class.wait()
 ```
 
-The code works fine both on Linux and Windows. And this may happen for a lot of different scenarios, until one day you try to do something slightly more complex, like writing or reading from a file:
+The code works fine both on Linux and Windows. And this may happen for a lot of different scenarios, until one day you try to do something slightly more complicated, like writing or reading from a file:
 
 ```python
 import multiprocessing as mp
@@ -197,12 +197,12 @@ On Linux, the code above works fine. On Windows (and Mac), however, there'll be 
 TypeError: cannot serialize '_io.TextIOWrapper' object
 ```
 
-Pay attention to the fact that we don't do anything with the file, we just open and store it as an attribute in the class. However, the error already points to an interesting feature. The way Spawning works is by pickling the objects. Therefore, if we have a class or an attribute which is not *pickable*, we will not be able to start a child process with it. 
+Pay attention to the fact that we don't do anything with the file. We just open and store it as an attribute in the class. However, the error already points to an interesting feature. The way Spawning works is by pickling the entire object. Therefore, if we have a class or an attribute that is not *pickable*, we will not be able to start a child process with it. 
 
-And, for people working with hardware, most likely the communication with the device, in pretty much the same way that a file, is non-pickable. It does not matter how much you try to make it multi-processing safe by implementing locks or whatnot, the root problem is at a lower level. 
+And, for people working with hardware, most likely the communication with the device, in pretty much the same way that a file is non-pickable. It does not matter how much you try to make it multiprocessing safe by implementing locks or whatnot. The root problem is at a lower level. 
 
 ## Is there a way of solving it?
-Sadly, there is no way of changing how processes start on Windows. You can, on the other hand, change how processes start on Linux. This would allow you to be sure your program runs also on Windows and Mac. We just need to add the following:
+Sadly, there is no way of changing how processes start on Windows. You can, on the other hand, change how processes start on Linux. It would allow you to be sure your program also runs on Windows and Mac. We just need to add the following:
 
 ```python
 if __name__ == '__main__':
@@ -212,6 +212,11 @@ if __name__ == '__main__':
     my_class.wait()
 ```
 
-By using ``set_start_method``, the program will give the same error both on Windows and on Linux. Whether you need to add this line or not, depends on what do you want to achieve. 
+By using ``set_start_method``, the program will give the same error on Windows and Linux. Whether you need to add this line or not depends on what do you want to achieve. 
 
 So, if you ever encounter these discrepancies, you will have to re-think the design of your program. I had objects with non-pickable attributes, especially drivers for devices and ZMQ sockets. 
+
+## Speed is another factor
+Even though processes usually speed up the speed of a program by leveraging multiple cores on a computer, starting each process can be time-consuming. The fact that on Windows and Mac Python needs to *pickle* the objects to create child processes adds an overhead that may offset the benefits of running on separated processes. It is especially relevant when you have many small tasks to perform, instead of a couple of long-running ones. 
+
+Therefore, when using processes, improving the speed of the program is not a granted outcome. You should always benchmark your application to understand where and how different components can affect its behavior. 
