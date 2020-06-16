@@ -1,88 +1,29 @@
----
-author:
-- Aquiles Carattino
-date: '2018-03-19'
-description: |
-    Learn how to use the HDF5 format to store large amounts of data and read
-    it back with Python
-header: '{attach}samuel-zeller-118195-unsplash.jpg'
-subtitle: HDF5 allows you to store large amounts of data efficiently
-tags: 'HDF5, Python, Data, Data Storage, h5py'
-title: How to use HDF5 files in Python
----
+When dealing with large amounts of data, either experimental or simulated, saving it to several text files is not very efficient. Sometimes you need to access a very specific subset of data, and you want to do it fast. In these situations, the HDF5 format solves both issues thanks to a very optimized underlying library. HDF5 is broadly used in scientific environments and has a great implementation in Python, designed to work with numpy out of the box.
 
-This article is part of a series of articles relating to data storage
-with Python. The other articles are:
+The HDF5 format in principle supports files of any size, each file has an internal structure that allows you to search for a specific dataset. You can think of it as a single file with its own hierarchical structure, just like a collection of folders and subfolders. By default, the data is stored in binary format, and the library is compatible with different data types. One of the most important options of the HDF5 format is that it allows attaching metadata to every element in the structure, making it ideal for generating self-contained files.
 
--   [Introduction to Storing Data in
-    Files](%7Bfilename%7D13_storing_data.rst)
--   [Storing Binary Data and
-    Serializing](%7Bfilename%7D14_Storing_data_2.rst)
--   [Using Databases to Store Data](%7Bfilename%7D15_Storing_data_3.rst)
--   [Using HDF5 Files with Python](%7Bfilename%7D02_HDF5_python.rst)
+In Python, the interface with the HDF5 format can be achieved through a package called **h5py**. One of the most interesting features of the h5py package is that data is read from the file only when it is needed. Imagine you have a very large array that doesn't fit in your available RAM memory. You could have generated the array, for example, in a computer with different specifications than the one you are using to analyze the data. The HDF5 format allows you to choose which elements of the array to read with a syntax equivalent to numpy. You can then work with the data stored on a hard drive rather than in the RAM memory without much modifications to your existing code.
 
-When dealing with large amounts of data, either experimental or
-simulated, saving it to several text files is not very efficient.
-Sometimes you need to access a very specific subset of data and you want
-to do it fast. In these situations, the HDF5 format solves both issues
-thanks to a very optimized underlying library. HDF5 is broadly used in
-scientific environments and has a great implementation in Python,
-designed to work with numpy out of the box.
+In this article, we are going to see how you can use **h5py** to store and retrieve data from a hard drive. We are going to discuss different ways of storing data and how to optimize the reading process. All the examples that appear in this article are also [available on our Github repository](https://github.com/uetke/website_content/tree/master/example_code/HDF_Examples).
 
-The HDF5 format in principle supports files of any size, each file has
-an internal structure that allows you to search for a specific dataset.
-You can think of it as a single file with its own hierarchical
-structure, just like a collection of folders and subfolders. By default,
-the data is stored in binary format and the library is compatible with
-different data types. One of the most important options of the HDF5
-format is that it allows attaching metadata to every element in the
-structure, making it ideal for generating self-contained files.
+--------------------
 
-In Python, the interface with the HDF5 format can be achieved through a
-package called **h5py**. One of the most interesting features of the
-h5py package is that data is read from the file only when it is needed.
-Imagine you have a very large array that doesn't fit in your available
-RAM memory. You could have generated the array, for example, in a
-computer with different specifications than the one you are using to
-analyze the data. The HDF5 format allows you to choose which elements of
-the array to read with a syntax equivalent to numpy. You can then work
-with the data stored on a hard drive rather than in the RAM memory
-without much modifications to your existent code.
+## Installing
 
-In this article, we are going to see how you can use **h5py** to store
-and retrieve data from a hard drive. We are going to discuss different
-ways of storing data and how to optimize the reading process. All the
-examples that appear in this article are also [available on our Github
-repository](https://github.com/uetke/website_content/tree/master/example_code/HDF_Examples).
+The HDF5 format is supported by the [HDF Group](https://www.hdfgroup.org/), and it is based on open source standards, meaning that your data will always be accessible, even if the group disappears. Support for Python is given through the [h5py package](https://www.h5py.org/) that can be installed through ``pip``. Remember that you should be using a <:Virtual Environment is a Must-Have Tool|virtual environment> to perform tests:
 
-Installing
-==========
-
-The HDF5 format is supported by the [HDF
-Group](https://www.hdfgroup.org/), and it is based on open source
-standards, meaning that your data will always be accessible, even if the
-group disappears. Support for Python is given through the [h5py
-package](https://www.h5py.org/) that can be installed through `pip`.
-Remember that you should be using a [virtual
-environment](%7Bfilename%7D03_Virtual_Environment.rst) to perform tests:
-
-```shellshell
+```shell
 pip install h5py
 ```
 
-the command will also install numpy in case you don't have it already in
-your environment.
+the command will also install numpy, in case you don't have it already in your environment.
 
-If you are looking for a graphical tool to explore the contents of your
-HDF5 files, you can install the [HDF5
-Viewer](https://support.hdfgroup.org/products/java/hdfview/). It is
-written in Java so it should work on almost any computer.
+If you are looking for a graphical tool to explore the contents of your HDF5 files, you can install the [HDF5
+Viewer](https://support.hdfgroup.org/products/java/hdfview/). It is written in Java so it should work on almost any computer.
 
-Basic Saving and Reading Data
-=============================
+## Basic Saving and Reading Data
 
-Let's go straight to using the HDF5 library. We will create a new file
-and save a numpy random array to it.
+Let's go straight to using the HDF5 library. We will create a new file and save a numpy random array to it.
 
 ```python
 import h5py
@@ -94,29 +35,12 @@ with h5py.File('random.hdf5', 'w') as f:
     dset = f.create_dataset("default", data=arr)
 ```
 
-The first few lines are quite straightforward, we import the packages
-h5py and numpy and create an array with random values. We open a file
-called random.hdf5 with write permission, `w` , which means that if
-there is already a file with the same name it is going to be
-overwritten. If you would like to preserve the file and still be able to
-write to it, you can open it with the `a` attribute instead of `w`. We
-create a dataset called `default` and we set the data as the random
-array created earlier. Datasets are holders of our data, basically the
-building blocks of the HDF5 format.
+The first few lines are quite straightforward; we import the packages h5py and numpy and create an array with random values. We open a file called random.hdf5 with write permission, ``w`` which means that if there is already a file with the same name, it is going to be overwritten. If you would like to preserve the file and still be able to write to it, you can open it with the ``a`` attribute instead of ``w``. We create a dataset called ``default``, and we set the data as the random array created earlier. Datasets are holders of our data, basically the building blocks of the HDF5 format.
 
-<div class="admonition note">
+!!! note
+    If you are not familiar with the `with` statement, I shall say that it is a convenient way of opening and closing a file. Even if there is an error within the ``with``, the file is going to be closed. If, for some reason, you don't use the ``with``, never forget to add the command `f.close()` at the end. The with-statement works with any kind of file, not necessarily an HDF file.
 
-If you are not familiar with the `with` statement, I shall say that it
-is a convenient way of opening and closing a file. Even if there is an
-error within the `with`, the file is going to be closed. If for some
-reason you don't use the `with`, never forget to add the command
-`f.close()` at the end. The with statement works with any kind of file,
-not necessarily an HDF file.
-
-</div>
-
-To read the data back, we can do it in a very similar way to when we
-read a numpy file:
+To read the data back, we can do it in a very similar way to when we read a numpy file:
 
 ```python
 with h5py.File('random.hdf5', 'r') as f:
@@ -126,30 +50,16 @@ with h5py.File('random.hdf5', 'r') as f:
    print(data[:15])
 ```
 
-We open the file with a read attribute, `r` , and we recover the data by
-directly addressing the dataset called default. If you are opening a
-file and you are not sure which data sets are available, you can
-retrieve them:
+We open the file with a read attribute, ``r`` and we recover the data by directly addressing the dataset called default. If you are opening a file and you are not sure which data sets are available, you can retrieve them:
 
 ```python
 for key in f.keys():
    print(key)
 ```
 
-Once you have read the data set that you want, you can use it as you
-would use any numpy array. For example, you can check the maximum and
-minimum values in the array, or you can select the first 15 values of
-it. These simple examples, however, are hiding a lot of the things that
-happen under the hood and that need to be discussed in order to
-understand the full potential of HDF5.
+Once you have read the data set that you want, you can use it as you would use any numpy array. For example, you can check the maximum and minimum values in the array, or you can select the first 15 values of it. These simple examples, however, are hiding a lot of the things that happen under the hood and that need to be discussed in order to understand the full potential of HDF5.
 
-In the example above, you can use `data` as an array. You can, for
-example, address the third element by typing `data[2]`, or you could get
-a range of values with `data[1:3]`. Note that `data` is not an array but
-a dataset. You can see it by typing `print(type(data))`. Datasets work
-in a completely different way than arrays because their information is
-stored on the hard drive and they don't load it to RAM memory if we
-don't use them. The following code, for example, will not work:
+In the example above, you can use `data` as an array. You can, for example, address the third element by typing `data[2]`, or you could get a range of values with `data[1:3]`. Note that `data` is not an array but a dataset. You can see it by typing `print(type(data))`. Datasets work in a completely different way than arrays because their information is stored on the hard drive, and they don't load it to RAM memory if we don't use them. The following code, for example, will not work:
 
 ```python
 f = h5py.File('random.hdf5', 'r')
@@ -158,42 +68,32 @@ f.close()
 print(data[1])
 ```
 
-The error that appears is a bit lengthy, but the last line is very
-helpful:
+The error that appears is a bit lengthy, but the last line is very helpful:
 
-```shellshell
+```shell
 ValueError: Not a dataset (not a dataset)
 ```
 
-The error means that we are trying to access a dataset to which we have
-no longer access. It is a bit confusing, but this happens because we
-closed the file, and therefore we are no longer allowed to access the
-second value in data. When we assigned `f['default']` to the variable
-`data` we are not actually reading the data from the file, instead, we
-are generating a pointer to where the data is located on the hard drive.
-On the other hand, this code will work:
+The error means that we are trying to access a dataset to which we have no longer access. It is a bit confusing, but this happens because we closed the file, and therefore we are no longer allowed to access the second value in data. When we assigned ``f['default']`` to the variable ``data``. We are not actually reading the data from the file; instead, we are generating a pointer to where the data is located on the hard drive. On the other hand, this code will work:
 
 ```python
 f = h5py.File('random.hdf5', 'r')
-data = f['default'][:]
+data = f['default'][()]
 f.close()
 print(data[10])
 ```
 
-If you pay attention, the only difference is that we added `[:]` after
-reading the dataset. Many other guides stop at these sort of examples,
-without ever really showing the full potential of the HDF5 format with
-the h5py package. Because of the examples that we did up to now, you
-could wonder why using HDF5, if saving numpy files gives you the same
-functionality. Let's dive into the specifics of the HDF5 format.
+If you pay attention, the only difference is that we added `[()]` after reading the dataset. Many other guides stop at these sort of examples, without ever really showing the full potential of the HDF5 format with the h5py package. Because of the examples that we did up to now, you could wonder why using HDF5, if saving numpy files gives you the same functionality. Let's dive into the specifics of the HDF5 format.
+
+---------------------------
 
 Selective Reading from HDF5 files
 =================================
 
-So far we have seen that when we read a dataset we are not yet reading
-data from the disk, instead, we are creating a link to a specific
+So far, we have seen that when we read a dataset, we are not yet reading
+data from the disk. Instead, we are creating a link to a specific
 location on the hard drive. We can see what happens if, for example, we
-explicitly read the first 10 elements of a dataset:
+explicitly read the first ten elements of a dataset:
 
 ```python
 with h5py.File('random.hdf5', 'r') as f:
@@ -202,16 +102,16 @@ with h5py.File('random.hdf5', 'r') as f:
 
 print(data[1])
 print(data_set[1])
-```
+`"
 
 We are splitting the code into different lines to make it more explicit,
-but you can be more synthetic in your projects. In the lines above we
+but you can be more synthetic in your projects. In the lines above, we
 first read the file, and we then read the default dataset. We assign the
-first 10 elements of the dataset to a variable called `data`. After the
+first ten elements of the dataset to a variable called ``data``. After the
 file closes (when the `with` finishes), we can access the values stored
-in `data`, but `data_set` will give an error. Note that we are only
-reading from the disk when we explicitly access the first 10 elements of
-the data set. If you print the type of `data` and of `data_set` you will
+in ``data``, but ``data_set`` will give an error. Note that we are only
+reading from the disk when we explicitly access the first ten elements of
+the data set. If you print the type of ``data`` and of ``data_set``, you will
 see that they are actually different. The first is a **numpy array**
 while the second is an **h5py DataSet**.
 
@@ -230,7 +130,7 @@ arr2 = np.random.randn(10000)
 with h5py.File('complex_read.hdf5', 'w') as f:
     f.create_dataset('array_1', data=arr1)
     f.create_dataset('array_2', data=arr2)
-```
+`"
 
 We have two datasets called `array_1` and `array_2`, each has a random
 numpy array stored in it. We want to read the values of `array_2` that
@@ -243,9 +143,9 @@ with h5py.File('complex_read.hdf5', 'r') as f:
     d2 = f['array_2']
 
     data = d2[d1>0]
-```
+`"
 
-but it will not work. `d1` is a dataset and can't be compared to an
+But it will not work. ``d1`` is a dataset and can't be compared to an
 integer. The only way is to actually read the data from the disk and
 then compare it. Therefore, we will end up with something like this:
 
@@ -254,13 +154,11 @@ with h5py.File('complex_read.hdf5', 'r') as f:
     d1 = f['array_1']
     d2 = f['array_2']
 
-    data = d2[d1[:]>0]
+    data = d2[d1[()]>0]
 ```
 
-The first dataset, `d1` is completely loaded into memory when we do
-`d1[:]`, but we grab only some elements from the second dataset `d2`. If
-the `d1` dataset would have been too large to be loaded into memory all
-at once, we could have worked inside a loop.
+The first dataset, ``d1`` is completely loaded into memory when we do
+``d1[()]``, but we grab only some elements from the second dataset, ``d2``. If the ``d1`` dataset had been too large to be loaded into memory all at once, we could have worked inside a loop.
 
 ```python
 with h5py.File('complex_read.hdf5', 'r') as f:
@@ -274,7 +172,7 @@ with h5py.File('complex_read.hdf5', 'r') as f:
             data.append(d2[i])
 
 print('The length of data with a for loop: {}'.format(len(data)))
-```
+`"
 
 Of course, there are efficiency concerns regarding reading an array
 element by element and appending it to a list, but it is a very good
@@ -286,7 +184,7 @@ have been anything, from a text to an image or a video.
 As always, depending on your application, you will have to decide if you
 want to read the entire array into memory or not. Sometimes you run
 simulations on a specific computer with loads of memory, but you don't
-have the same specifications in your laptop and you are forced to read
+have the same specifications in your laptop, and you are forced to read
 chunks of your data. Remember that reading from a hard drive is
 relatively slow, especially if you are using HDD instead of SDD disks or
 even more if you are reading from a network drive.
@@ -294,7 +192,7 @@ even more if you are reading from a network drive.
 Selective Writing to HDF5 Files
 ===============================
 
-In the examples above we have appended data to a data set as soon as
+In the examples above, we have appended data to a data set as soon as
 this was created. For many applications, however, you need to save data
 while it is being generated. HDF5 allows you to save data in a very
 similar way to how you read it back. Let's see how to create an empty
@@ -309,29 +207,15 @@ with h5py.File('random.hdf5', 'w') as f:
 ```
 
 The first couple of lines are the same as before, with the exception of
-`create_dataset`. We don't append data when creating it, we just create
-an empty dataset able to hold up to 1000 elements. With the same logic
-as before, when we read specific elements from the dataset, we are
+``create_dataset``. We don't append data when creating it. We just create an empty dataset able to hold up to 1000 elements. With the same logic as before, when we read specific elements from the dataset, we are
 actually writing to disk only when we assign values to specific elements
-of the `dset` variable. In the example above we are assigning values
+of the ``dset`` variable. In the example above, we are assigning values
 just to a subset of the array, the indexes 10 to 19.
 
-<div class="admonition warning">
+!!! warning
+    It is not entirely true that you write to disk when you assign values to a dataset. The precise moment depends on several factors, including the state of the operating system. If the program closes too early, it may happen that not everything was written. It is very important to always use the `close()` method, and in case you write in stages, you can also use `flush()` in order to force the writing. Using `with` prevents a lot of writing issues.
 
-It is not entirely true that you write to disk when you assign values to
-a dataset. The precise moment depends on several factors, including the
-state of the operating system. If the program closes too early, it may
-happen that not everything was written. It is very important to always
-use the `close()` method, and in case you write in stages, you can also
-use `flush()` in order to force the writing. Using `with` prevents a lot
-of writing issues.
-
-</div>
-
-If you read the file back and print the first 20 values of the dataset,
-you will see that they are all zeros except for the indexes 10 to 19.
-There is a **common mistake** that can give you a lot of headaches. The
-following code will not save anything to disk:
+If you read the file back and print the first 20 values of the dataset, you will see that they are all zeros except for the indexes 10 to 19. There is a **common mistake** that can give you a lot of headaches. The following code will not save anything to disk:
 
 ```python
 arr = np.random.randn(1000)
@@ -344,28 +228,28 @@ with h5py.File('random.hdf5', 'w') as f:
 This mistake always gives a lot of issues, because you won't realize
 that you are not saving anything until you try to read it back. The
 problem here is that you are not specifying where you want to store the
-data, you are just overwriting the `dset` variable with a numpy array.
+data; you are just overwriting the ``dset`` variable with a numpy array.
 Since both the dataset and the array have the same length, you should
-have used `dset[:] = arr`. This mistake happens more often than you
+have used ``dset[:] = arr``. This mistake happens more often than you
 think, and since it is technically not wrong, you won't see any errors
 printed to the terminal, but your data will be just zeros.
 
-So far we have always worked with 1-dimensional arrays but we are not
+So far we have always worked with 1-dimensional arrays, but we are not
 limited to them. For example, let's assume we want to use a 2D array, we
 can simply do:
 
 ```python
 dset = f.create_dataset('default', (500, 1024))
-```
+`"
 
-which will allow us to store data in a 500x1024 array. To use the
+Which will allow us to store data in a 500x1024 array. To use the
 dataset, we can use the same syntax as before, but taking into account
 the second dimension:
 
 ```python
 dset[1,2] = 1
 dset[200:500, 500:1024] = 123
-```
+`"
 
 Specify Data Types to Optimize Space
 ====================================
@@ -387,10 +271,10 @@ with h5py.File('several_datasets.hdf5', 'w') as f:
    dset_int_1[0] = 1200
    dset_int_8[0] = 1200.1
    dset_complex[0] = 3 + 4j
-```
+`"
 
 In the example above, we have created three different datasets, each
-with a different type. Integers of 1 byte, integers of 8 bytes and
+with a different type. Integers of 1 byte, integers of 8 bytes, and
 complex numbers of 16 bytes. We are storing only one number, even if our
 datasets can hold up to 10 elements. You can read the values back and
 see what was actually stored. The two things to note here are that the
@@ -400,20 +284,18 @@ the integer of 8 bytes should have been rounded to 1200 (instead of
 
 If you have ever programmed in languages such as C or Fortran, you
 probably are aware of what different data types mean. However, if you
-have always worked with Python, perhaps you haven't faced any issues by
-not declaring explicitly the type of data you are working with. The
+have always worked with Python, perhaps you haven't faced any issues by not declaring explicitly the type of data you are working with. The
 important thing to remember is that the number of bytes tells you how
-many different numbers you can store. If you use 1 byte, you have 8 bits
-and therefore you can store 2\^8 different numbers. In the example
+many different numbers you can store. If you use 1 byte, you have 8 bits, and therefore you can store 2**8 different numbers. In the example
 above, integers are both positive, negative, and 0. When you use
-integers of 1 byte you can store values from -128 to 127, in total they
-are 2\^8 possible numbers. It is equivalent when you use 8 bytes, but
+integers of 1 byte, you can store values from -128 to 127. In total, there
+are 2**8 possible numbers. It is equivalent when you use 8 bytes, but
 with a larger range of numbers.
 
 The type of data that you select will have an impact on its size. First,
 let's see how this works with a simple example. Let's create three
 files, each with one dataset for 100000 elements but with different data
-types. We will store the same data to them and then we can compare their
+types. We will store the same data to them, and then we can compare their
 sizes. We create a random array to assign to each dataset in order to
 fill the memory. Remember that data will be converted to the format
 specified in the dataset.
@@ -435,40 +317,40 @@ f = h5py.File('float.hdf5', 'w')
 d = f.create_dataset('dataset', (100000,), dtype='f16')
 d[:] = arr
 f.close()
-```
+`"
 
 If you check the size of each file you will get something like:
 
-  File         Size (b)
-  ------------ ----------
-  integer\_1   102144
-  integer\_8   802144
-  float        1602144
+|File |         Size (b)|
+|------|------------------|
+|integer\_1 |  102144|
+|integer\_8 |  802144|
+|float           |1602144|
 
 The relation between size and data type is quite obvious. When you go
 from integers of 1 byte to integer of 8 bytes, the size of the file
-increases 8-fold, similarly, when you go to 16 bytes it takes
+increases 8-fold. Similarly, when you go to 16 bytes, it takes
 approximately 16 times more space. But space is not the only important
-factor to take into account, you should also consider the time it takes
+factor to take into account. You should also consider the time it takes
 to write the data to disk. The more you have to write, the longer it
-will take. Depending on your application it may be crucial to optimize
+will take. Depending on your application, it may be crucial to optimize
 the reading and writing of data.
 
 Note that if you use the wrong data type, you may also lose information.
 For example, if you have integers of 8 bytes and you store them as
 integers of 1 byte, their values are going to be trimmed. When working
 in the lab, it is very common to have devices that produce different
-types of data. Some DAQ cards have 16 bits, some cameras work with 8
-bits but some can work with 24. Paying attention to data types is
+types of data. Some DAQ cards have 16 bits. Some cameras work with 8
+bits, but some can work with 24. Paying attention to data types is
 important, but is also something that Python developers may not take
 into account because you don't have to explicitly declare a type.
 
 It is also interesting to remember that when you initialize an array
-with numpy it will default to float 8 bytes (64 bits) per element. This
+with numpy, it will default to float 8 bytes (64 bits) per element. This
 may be a problem if, for example, you initialize an array with zeros to
 hold data that is going to be only 2 bytes. The type of the array itself
 is not going to change, and if you save the data when creating the
-dataset (adding `data=my_array`) it will default to the format `'f8'`,
+dataset (adding ``data=my_array``) it will default to the format ``f8``,
 which is the one the array has but not your real data.
 
 Thinking about data types is not something that happens on a regular
@@ -507,7 +389,7 @@ with h5py.File('integer_8_compr.hdf5', 'w') as f:
 with h5py.File('float_compr.hdf5', 'w') as f:
     d = f.create_dataset('dataset', (100000,), dtype='f16', compression="gzip", compression_opts=9)
     d[:] = arr
-```
+`"
 
 We chose gzip because it is supported in all platforms. The parameters
 `compression_opts` sets the level of compression. The higher the level,
@@ -515,11 +397,11 @@ the less space data takes but the longer the processor has to work. The
 default level is 4. We can see the differences in our files based on the
 level of compression:
 
-  Type         No Compression   Compression 9   Compression 4
-  ------------ ---------------- --------------- ---------------
-  integer\_1   102144           28016           30463
-  integer\_8   802144           43329           57971
-  float        1602144          1469580         1469868
+|Type           |No Compression  | Compression 9  | Compression 4 |
+|----------------|:------------------------:|:----------------------:|-----------------------:|
+|integer\_1  |   102144               |28016                  |30463                   |
+|integer\_8  |  802144                |43329                  |57971                   |
+|float            |1602144                |1469580              |1469868              |
 
 The impact of compression on the integer datasets is much more
 noticeable than with the float dataset. I leave it up to you to
@@ -564,7 +446,7 @@ with h5py.File('resize_dataset.hdf5', 'r') as f:
     dset = f['dataset']
     print(dset[99])
     print(dset[199])
-```
+`"
 
 First, you create a dataset to store 100 values and set a maximum size
 of up to 500 values. After you stored the first batch of values, you can
@@ -591,7 +473,7 @@ with h5py.File('resize_dataset.hdf5', 'r') as f:
     print(dset[99])
     print(dset[199])
     print(dset[299])
-```
+`"
 
 In the example above you can see that we are opening the dataset,
 modifying its first 200 values, and appending new values to the elements
@@ -611,7 +493,7 @@ with h5py.File('movie_dataset.hdf5', 'w') as f:
    d[:,:,0] = first_frame
    d.resize((1024,1024,2))
    d[:,:,1] = second_frame
-```
+`"
 
 The dataset holds square images of 1024x1024 pixels, while the third
 dimension gives us the stacking in time. We assume that the images don't
@@ -630,7 +512,7 @@ create a chunked dataset, the command is:
 
 ```python
 dset = f.create_dataset("chunked", (1000, 1000), chunks=(100, 100))
-```
+`"
 
 The command means that all the data in `dset[0:100,0:100]` will be
 stored together. It is also true for `dset[200:300, 200:300]`,
@@ -649,7 +531,7 @@ explicitly by doing:
 
 ```python
 dset = f.create_dataset("autochunk", (1000, 1000), chunks=True)
-```
+`"
 
 Organizing Data with Groups
 ===========================
@@ -672,7 +554,7 @@ with h5py.File('groups.hdf5', 'w') as f:
 
     d = g.create_dataset('default', data=arr)
     dd = gg.create_dataset('default', data=arr)
-```
+`"
 
 We create a group called `Base_Group` and within it, we create a second
 one called `Sub_Group`. In each one of the groups, we create a dataset
@@ -685,7 +567,7 @@ with h5py.File('groups.hdf5', 'r') as f:
    dd = f['Base_Group/Sub_Group/default']
    print(d[1])
    print(dd[1])
-```
+`"
 
 As you can see, to access a dataset we address it as a folder within the
 file: `Base_Group/default` or `Base_Group/Sub_Group/default`. When you
@@ -696,7 +578,7 @@ you need to list them. The easiest way is using `keys()`:
 with h5py.File('groups.hdf5', 'r') as f:
     for k in f.keys():
         print(k)
-```
+`"
 
 However, when you have nested groups, you will also need to start
 nesting for-loops. There is a better way of iterating through the tree,
@@ -709,7 +591,7 @@ def get_all(name):
 
 with h5py.File('groups.hdf5', 'r') as f:
    f.visit(get_all)
-```
+`"
 
 Notice that we define a function `get_all` that takes one argument,
 `name`. When we use the `visit` method, it takes as argument a function
@@ -726,7 +608,7 @@ def get_all(name):
 with h5py.File('groups.hdf5', 'r') as f:
     g = f.visit(get_all)
     print(g)
-```
+`"
 
 When the method `visit` is iterating through every element, as soon as
 the function returns something that is not `None` it will stop and
@@ -740,7 +622,7 @@ do:
 with h5py.File('groups.hdf5', 'r') as f:
    g_name = f.visit(get_all)
    group = f[g_name]
-```
+`"
 
 And you can work as explained earlier with groups. A second approach is
 to use a method called `visititems` that takes a function with two
@@ -755,7 +637,7 @@ with h5py.File('groups.hdf5', 'r') as f:
    group = f.visititems(get_objects)
    data = group['default']
    print('First data element: {}'.format(data[0]))
-```
+`"
 
 The main difference when using `visititems` is that we have accessed not
 only the name of the object that is being analyzed but also the object
@@ -800,7 +682,7 @@ with h5py.File('groups.hdf5', 'w') as f:
 
     for j in d.attrs.keys():
       print('{} => {}'.format(j, d.attrs[j]))
-```
+`"
 
 In the code above you can see that the `attrs` is like a dictionary. In
 principle, you shouldn't use attributes to store data, keep them as
@@ -822,7 +704,7 @@ with h5py.File('groups.hdf5', 'w') as f:
 
    for m in f.attrs.keys():
       print('{} => {}'.format(m, f.attrs[m]))
-```
+`"
 
 Remember that the data types that hdf5 supports are limited. For
 example, dictionaries are not supported. If you want to add a dictionary
@@ -843,7 +725,7 @@ with h5py.File('groups_dict.hdf5', 'w') as f:
                 'OS': os.name,}
 
     m = g.create_dataset('metadata', data=json.dumps(metadata))
-```
+`"
 
 The beginning is the same, we create a group and a dataset. To store the
 metadata we define a new dataset, appropriately called metadata. When we
@@ -857,7 +739,7 @@ with h5py.File('groups_dict.hdf5', 'r') as f:
     metadata = json.loads(f['Base_Group/metadata'][()])
     for k in metadata:
         print('{} => {}'.format(k, metadata[k]))
-```
+`"
 
 When you use json to encode your data, you are defining a specific
 format. You could have used YAML, XML, etc. Since it may not be obvious
@@ -898,16 +780,3 @@ It takes a bit of time to get used to, and you will need to experiment
 for a while until you find a way in which it can help you store your
 data. HDF5 is a good format if you need to establish transversal rules
 in your lab on how to store data and metadata.
-
-Header photo by [Samuel Zeller](https://www.samuelzeller.ch) on
-[Unsplash](https://unsplash.com/photos/JuFcQxgCXwA?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText)
-
-This article is part of a series of articles relating to data storage
-with Python. The other articles are:
-
--   [Introduction to Storing Data in
-    Files](%7Bfilename%7D13_storing_data.rst)
--   [Storing Binary Data and
-    Serializing](%7Bfilename%7D14_Storing_data_2.rst)
--   [Using Databases to Store Data](%7Bfilename%7D15_Storing_data_3.rst)
--   [Using HDF5 Files with Python](%7Bfilename%7D02_HDF5_python.rst)
