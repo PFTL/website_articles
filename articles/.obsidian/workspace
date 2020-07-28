@@ -1,0 +1,77 @@
+{
+  "main": {
+    "id": "afed9487215bca4e",
+    "type": "split",
+    "children": [
+      {
+        "id": "1636e2514c3ad6bb",
+        "type": "leaf",
+        "active": true,
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "02_HDF5_python.md",
+            "mode": "source"
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "312a6f7b4d73e72f",
+    "type": "split",
+    "children": [
+      {
+        "id": "c50293668e5330ff",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b70062285c03bfb0",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "538e03cfe56b18a2",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "4f4a0bbd4a08afc9",
+    "type": "split",
+    "children": [
+      {
+        "id": "a21cd7d6ca2dca13",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1f1fd995019a3188",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "lastOpenFiles": [
+    "02_HDF5_python.md"
+  ]
+}
