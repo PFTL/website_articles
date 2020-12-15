@@ -82,4 +82,108 @@ True
 That completes the triad of singletons that Python programmers encounter daily. It explains why we can use the ``is`` syntax when checking if a variable is ``None``, ``True`` or ``False``. This is only the beginning regarding singletons.
 
 ## Small integer singletons
-Python defines other singletons that are not that obvious, and are mostly there because of memory and speed efficiency. Such is the case of small integers in the rage -5 to 256.
+Python defines other singletons that are not that obvious, and are mostly there because of memory and speed efficiency. Such is the case of small integers in the rage -5 to 256. Therefore, we can do something like this:
+
+```pycon
+>>> var1 = 1
+>>> var2 = 1
+>>> var1 is var2
+True
+```
+
+Or, more interestingly:
+
+```pycon
+>>> var1 = [1, 2, 3]
+>>> var2 = [1, 2, 3]
+>>> var1 is var2
+False
+>>> for i, j in zip(var1, var2):
+...     i is j
+... 
+True
+True
+True
+```
+
+In the example above you see two lists with the same elements. They are not the same list as we saw earlier, but each one of their elements is exactly the same. If we want to get fancier with Python's syntax (just because we can), we can also run the following:
+
+```pycon
+>>> var1 = [i for i in range(250, 260)]
+>>> var2 = [i for i in range(250, 260)]
+>>> for i, j in zip(var1, var2):
+...     print(i, i is j)
+... 
+250 True
+251 True
+252 True
+253 True
+254 True
+255 True
+256 True
+257 False
+258 False
+259 False
+```
+
+And we see that up to 256, integers are the same, but from 257 onwards they are not. 
+
+## Short strings singletons
+Small integers are not the only unexpected singletons in Python. Short strings are, sometimes, also singletons. We can try something like the following:
+
+```pycon
+>>> var1 = 'abc'
+>>> var2 = 'abc'
+>>> var1 is var2
+True
+```
+
+However, with strings the reality is somewhat different. The process is called **string interning**, and is described on [Wikipedia](https://en.wikipedia.org/wiki/String_interning). Compared to integers which are pre-defined, Python decides whether to allocate memory for strings as singletons based on some rules. First, strings must be defined at *compile time*, this means that they should not be the output of a formatting task or a function. In the example above, ``var1 = 'abc'`` qualifies. 
+
+Python tries its best at being efficient, and therefore will intern other strings that considers will help save memory (and/or time). For example, function names are interned by default:
+
+```pycon
+>>> def test_func():
+...     print('test func')
+... 
+>>> var1 = 'test_func'
+>>> test_func.__name__ is var1
+True
+```
+
+Empty strings and some single-character strings are interned by default, as is the case with small integers:
+
+```pycon
+>>> var1 = chr(255)
+>>> var2 = chr(255)
+>>> var3 = chr(256)
+>>> var4 = chr(256)
+>>> var1 is var2
+True
+>>> var3 is var4
+False
+```
+
+The fact that some strings are interned, does not mean we can get too confident about it. For example:
+
+```pycon
+>>> var1 = 'Test String'
+>>> var2 = 'Test String'
+>>> var1 is var2
+False
+>>> var2 = 'TestString'
+>>> var1 = 'TestString'
+>>> var1 is var2
+True
+```
+
+As we can see in the example above, being a short string is not the only requirement, the string must also be made of a limited set of characters, and spaces are not part of it. 
+
+Therefore, the fact that Python is interning strings, does not mean we are supposed to use the ``is`` syntax instead of the ``==``, it just means that Python is running some optimizations under the hood. Perhaps one day those optimizations become relevant for our own code, but likely they will go completely unnoticed (but enjoyed). 
+
+## Why singletons
+What we have seen up to now is interesting, but it does not answer the question of why going through the trouble of defining singletons. One clear answer is that by having singletons we can save memory. In Python, what we normally call variables, can also be thought as labels, pointing to the underlying data. If we have several labels pointing to the exact same data, it would be very memory efficient. There's no duplication of the information. 
+
+However, if we ask ourselves when to add a singleton to our own code, most likely we won't find very good examples. A singleton is a class that is instantiated only once. All other instances refer to the first, and therefore *are* the same. If you think about it, singletons and global variables are easy to mistake one for the other. However, a global variable does not imply anything about how it is instantiated. We could have a global variable pointing to an instance of a class and a local variable pointing to a different instance of the same class. 
+
+Singletons are a programming pattern, and as such, they can be useful, but there's nothing we can do with them that can't be done without them. A standard example of singletons is a logger. For your programs you probably want a single, central, logger, which can be turned on and off depending on the occasion. Singletons can be useful when accessing a central resource and our program can follow different execution paths. For example, writing to the same file from different parts of a program without having to open/close the file each time.  
