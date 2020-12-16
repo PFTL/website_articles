@@ -210,7 +210,7 @@ class MySingleton:
         
     def __new__(cls, *args, **kwargs):
         if not isinstance(cls.instance, cls):
-            cls.instance = object.__new__(cls, *args, **kwargs)
+            cls.instance = object.__new__(cls)
         return cls.instance
 ```
 
@@ -225,5 +225,105 @@ True
 
 This approach is relatively straightforward, we only need to check whether the ``instance`` was defined, and create it if it does not exist. Sure, we could use ``__instance``, or fancier ways of checking if the variable exists. The end result would be the same. 
 
+Singletons are a pattern which, in the end is hard to justify. So we can see one example on which we open a file more than once. Our singleton class would look like this:
 
+```python
+class MyFile:
+    _instance = None
+    file = None
 
+    def __init__(self, filename):
+        if self.file is None:
+            self.file = open(filename, 'w')
+
+    def write(self, line):
+        self.file.write(line + '\n')
+
+    def __new__(cls, *args, **kwargs):
+        if not isinstance(cls._instance, cls):
+            cls._instance = object.__new__(cls)
+
+        return cls._instance
+```
+
+Note a couple of things. First, we have defined ``file`` as a class attribute. We do this because the ``__init__`` method will be executed as many times as the class is instantiated. Therefore, we open the file only once. We can achieve the same behavior directly in the ``__new__`` method, after we check the ``_instance`` attribute. Note that we open the file in ``w`` mode, which means that the content of the file will be overwritten each time. 
+
+We can use the singleton like this:
+
+```pycon
+>>> f = MyFile('test.txt')
+>>> f.write('test1')
+>>> f.write('test2')
+
+>>> f2 = MyFile('test.txt')
+>>> f2.write('test3')
+>>> f2.write('test4')
+```
+
+And the contents of the file would be:
+
+```
+test1
+test2
+test3
+test4
+```
+
+It is clear from the example above, that it does not matter if we first define ``f`` or ``f2``, the file to which we are going to write is opened only once. The contents get erased only once and every time we write to it through the program, lines will be appended. 
+
+We can also check if it is actually a singleton:
+
+```pycon
+>>> f is f2
+True
+```
+
+However, in the way we defined our class above there is one very big problem. What would be the output of the following?
+
+```pycon
+>>> f = MyFile('test.txt')
+>>> f.write('test1')
+>>> f.write('test2')
+>>> f2 = MyFile('test2.txt')
+>>> f2.write('test3')
+>>> f2.write('test4')
+```
+
+The code is valid, but the program will create only the first file (``test.txt``) and will ignore the argument of the second instantiation. Another very interesting point is what happens if we removed completely the ``__new__`` method:
+
+```python
+class MyFile:
+    file = []
+
+    def __init__(self, filename):
+        if len(self.file) == 0:
+            self.file.append(open(filename, 'w'))
+
+    def write(self, line):
+        self.file[0].write(line + '\n')
+```
+
+By definition this class is not a singleton, since each time we instantiate it we will get a different object:
+
+```pycon
+>>> f = MyFile('test.txt')
+>>> f2 = MyFile('test.txt')
+>>> f is f2
+False
+>>> f.write('test1')
+>>> f.write('test2')
+>>> f2.write('test3')
+>>> f2.write('test4')
+```
+
+We are slightly cheating now because we changed the ``file`` attribute from ``None`` to an empty list. We do this because lists are mutable. When we append the opened file, the list is still the same and therefore shared among the other instances. In any case the end effect is the same. The file is opened only once, and the lines get written in the same fashion as before. 
+
+The idea of this quick example is that opening the file only once is not a feature exclusive of singletons. Just by smartly using mutability we can achieve the same effect, in even fewer lines of code. 
+
+## Conclusions
+The singleton pattern can be of great help when designing lower level applications or frameworks. Python uses singletons to speed up its execution and to be more memory efficient. If we compare the time it takes to resolve ``f == f2`` and ``f is f2`` in the singleton and not-singleton cases, we can see some time improvements in the first. Whether the improvements have an impact that outweighs the costs and limitations of the implementation, will depend on how often we check the equality. 
+
+For higher-level solutions, however, the singleton pattern is harder to come by. I have tried to digg  examples in other projects, but the only answer that comes back is the *logger* implementation. If anyone has a good example of use of singletons in higher-level programs, I would be very grateful to hear it. 
+
+### Singletons can break unit tests
+A side note that is worth mentioning is that the singleton pattern can easily break the idea of unit tests. In the singleton example above, we could have modified the ``MyFile`` object by doing something like ``f.new_file = open('another_file')``. This change would have been persistent, and can potentially alter other tests. The spirit behind unit tests is that each one is responsible for one thing, and one thing only. If tests can have an impact on each other, then they are no longer *unit* tests. 
