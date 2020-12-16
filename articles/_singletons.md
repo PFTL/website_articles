@@ -186,4 +186,44 @@ What we have seen up to now is interesting, but it does not answer the question 
 
 However, if we ask ourselves when to add a singleton to our own code, most likely we won't find very good examples. A singleton is a class that is instantiated only once. All other instances refer to the first, and therefore *are* the same. If you think about it, singletons and global variables are easy to mistake one for the other. However, a global variable does not imply anything about how it is instantiated. We could have a global variable pointing to an instance of a class and a local variable pointing to a different instance of the same class. 
 
-Singletons are a programming pattern, and as such, they can be useful, but there's nothing we can do with them that can't be done without them. A standard example of singletons is a logger. For your programs you probably want a single, central, logger, which can be turned on and off depending on the occasion. Singletons can be useful when accessing a central resource and our program can follow different execution paths. For example, writing to the same file from different parts of a program without having to open/close the file each time.  
+Singletons are a programming pattern, and as such, they can be useful, but there's nothing we can do with them that can't be done without them. A standard example of singletons is a **logger**. Several parts of the program share information with the logger, and there is a central place (the handler) that decides whether to print to the terminal, save to a file, or don't do anything.
+
+## Defining a singleton
+The crucial point of singletons is preventing multiple instantiation. Let's start by checking what happens when we instantiate a class twice:
+
+```python
+class MySingleton:
+    pass
+
+
+ms1 = MySingleton()
+ms2 = MySingleton()
+print(ms1 is ms2)
+# False
+```
+
+As expected, both instances are actually different objects. To prevent the second instantiation, we must keep track of whether a class was instantiated. We can use a variable in the class itself to do it, and return the same object. A possibility is to use of the ``__new__`` method of the class:
+
+```python
+class MySingleton:
+    instance = None
+        
+    def __new__(cls, *args, **kwargs):
+        if not isinstance(cls.instance, cls):
+            cls.instance = object.__new__(cls, *args, **kwargs)
+        return cls.instance
+```
+
+And we can test it:
+
+```pycon
+>>> ms1 = MySingleton()
+>>> ms2 = MySingleton()
+>>> ms1 is ms2
+True
+```
+
+This approach is relatively straightforward, we only need to check whether the ``instance`` was defined, and create it if it does not exist. Sure, we could use ``__instance``, or fancier ways of checking if the variable exists. The end result would be the same. 
+
+
+
