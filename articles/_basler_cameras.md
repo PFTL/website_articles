@@ -44,7 +44,7 @@ for device in devices:
     print(device.GetFriendlyName())
 ```
 
-Which will generate a list of the cameras connected to our computer, similar to what we see with the PylonViewer program. The oputput would be something like this:
+Which will generate a list of the cameras connected to our computer, similar to what we see with the PylonViewer program. In my case, the output is:
 
 ```bash
 Basler a2A1920-160umBAS (40063823)
@@ -63,7 +63,7 @@ Which is not particularly useful. Each object returned by the enumeration of the
 In many cases we have only one camera, and the rest of the article will proceed on that assumption. If it is not the case, we can address the camera we want by using its unique properties. 
 
 ## Acquiring an Image
-If we are working with a camera, the first thing we may want to do is to acquire an image to test that everything is working as expected. We can create an ``InstantCamera`` object by running the following code:
+If we are working with a camera, the first thing we may want to do is to acquire an image. We can create an ``InstantCamera`` object by running the following code:
 
 ```python
 tl_factory = pylon.TlFactory.GetInstance()
