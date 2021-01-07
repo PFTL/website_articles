@@ -169,6 +169,63 @@ In this example, ``StartGrabbing`` receives a strategy of ``OneByOne``, which is
 
 If grabbing data was successful, we increase a counter. We stop the loop if we reach to 100 frames, but we could have used any other approach to stop the program at some point. It is important to note that we stop the loop, but not the grabbing itself. The grabbing stops when the camera is closed, courtesy of the ``InstantCamera`` object. It is possible to use ``StopGrabbing`` to stop the camera acquisition. 
 
+## Timeout when retrieving the result
+In the examples we've seen so far, we have set everything in order to avoid problems. However, we are one very simple step away from getting into trouble. We are using an exposure time of 50ms and a timeout of 100ms when retrieving the result. It is worth exploring what would happen if the timeout is shorter than the exposure time. 
 
+```python
+camera.Open()
+camera.ExposureTime = 105000  # in us
+camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
+grab = camera.RetrieveResult(100, pylon.TimeoutHandling_ThrowException)
+if grab.GrabSucceeded():
+    print('Grab succeded')
 
+camera.Close()
+```
 
+If we run the code above we will see that many times it runs fine. Note that the difference between exposure time and timeout is only 5ms. If there's a slight delay between the start grabbing and the retrieving results, it is enough to pass through. If we try to acquire a couple of frames in a row, we'll see the problem:
+
+```python
+camera.Open()
+camera.ExposureTime = 105000
+camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
+for i in range(10):
+    grab = camera.RetrieveResult(100, pylon.TimeoutHandling_ThrowException)
+    if grab.GrabSucceeded():
+        print('Grab succeded')
+
+camera.Close()
+```
+
+The code above will generate an output like this:
+
+```bash
+Traceback (most recent call last):
+  File "ac.py", line 17, in <module>
+    grab = camera.RetrieveResult(100, pylon.TimeoutHandling_ThrowException)
+  File "C:\Users\aquic\.conda\envs\disper\lib\site-packages\pypylon\pylon.py", line 3458, in RetrieveResult
+    return _pylon.InstantCamera_RetrieveResult(self, *args)
+_genicam.TimeoutException: Grab timed out. : TimeoutException thrown (file 'instantcameraimpl.h', line 1064)
+```
+
+Which is expected since we are using the option ``pylon.TimeoutHandling_ThrowException``. We can also try to use the other option, ``TimeoutHandling_Return``, in which case we would get this output:
+
+```python
+Traceback (most recent call last):
+  File "ac.py", line 18, in <module>
+    if grab.GrabSucceeded():
+  File "C:\Users\aquic\.conda\envs\disper\lib\site-packages\pypylon\pylon.py", line 2229, in GrabSucceeded
+    return _pylon.GrabResult_GrabSucceeded(self)
+_genicam.RuntimeException: No grab result data is referenced. Cannot access NULL pointer. : RuntimeException thrown (file 'grabresultptr.cpp', line 84)
+```
+
+Both outputs exceptions, even if they have a timeout as the cause, are radically different. On the first one, it is the ``RetrieveResult`` method that raises the exception, while in the seccond is the ``GrabSucceeded``. For the first pattern, we can use a ``try... except`` block to catch the exception. For the second example, note that the error message states ``Cannot access NULL pointer``. This means that grab is actually NULL. We can therefore use another approach to deal with the second pattern:
+
+```python
+if grab and grab.GrabSucceeded():
+    print('Grab succeded')
+```
+
+It must be clear that ``if grab`` is ``True`` only when the RetrieveResult didn't timeout. On the other hand, Python tests if-statements sequentially. It will first check ``if grab`` and *only* if it passes, it checks for ``GrabSucceeded()``. In this way we can quickly prevent the error without try-excepts. 
+
+## Working with buffers
