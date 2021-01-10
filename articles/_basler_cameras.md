@@ -228,4 +228,96 @@ if grab and grab.GrabSucceeded():
 
 It must be clear that ``if grab`` is ``True`` only when the RetrieveResult didn't timeout. On the other hand, Python tests if-statements sequentially. It will first check ``if grab`` and *only* if it passes, it checks for ``GrabSucceeded()``. In this way we can quickly prevent the error without try-excepts. 
 
+## Using callbacks
+Python programmers do not use callbacks often, but they can be a useful pattern. The idea of a callback is that we can specify what functions gets executed when an action finishes. For a camera, we can think of what happens after a frame is acquired, or after the camera is initialized. Pylon implements these ideas through event handlers, which are a specific type of class that defines some methods. Let's define a very basic one so we can start digging on the options:
+
+```python
+class EventPrinter(pylon.ConfigurationEventHandler):
+    def OnAttach(self, camera):
+        print(f'Before attaching the camera {camera}')
+```
+
+The name, ``EventPrinter`` is arbitrary, but the method ``OnAttach`` is defined in the Pylon manual. As the name suggests, this method will be executed after a camera is attached, and it takes one argument: ``camera``. In order to use this event handler, we must register it:
+
+```python
+tl_factory = pylon.TlFactory.GetInstance()
+camera = pylon.InstantCamera()
+camera.RegisterConfiguration(EventPrinter(), pylon.RegistrationMode_Append, pylon.Cleanup_Delete)
+
+camera.Attach(tl_factory.CreateFirstDevice())
+```
+
+Just the code above is enough to produce the following output:
+
+```bash
+# To complete!
+```
+
+Note that we used an instance of the ``EventPrinter``, we used the ``RegistrionMode_Append``, and we delete the configuration when we are done. Append means that the methods we defined are going to be executed after the ones already present. We could replace the previous methods by the new ones, for example. But the even handler is not limited to attaching the camera, there are many other possibilities:
+
+```python
+class EventPrinter(pylon.ConfigurationEventHandler):
+    def OnAttach(self, camera):
+        print(f'Before attaching the camera {camera}')
+
+    def OnAttached(self, camera):
+        print(f'Attached: {camera.GetDeviceInfo()}')
+
+    def OnOpen(self, camera):
+        print('Before opening')
+
+    def OnOpened(self, camera):
+        print('After Opening')
+
+    def OnDestroy(self, camera):
+        print('Before destroying')
+
+    def OnDestroyed(self, camera):
+        print('After destroying')
+
+    def OnClosed(self, camera):
+        print('Camera Closed')
+
+    def OnDetach(self, camera):
+        print('Detaching')
+
+    def OnGrabStarted(self, camera):
+        print('Grab started')
+        time.sleep(2)
+```
+
+We can see that there's a great level of control at every stage of the camera lifecycle, and we have access to the camera itself. We could, for example, define some initial parameters for the camera, such as exposure time or gain, in such a way that we always start it in the same way. We can use this approach to let other parts of our program know when a camera is attached, starts grabbing or is destroyed. 
+
+Another option is not the configuration handler, but the image handler. From a simple example is clear how it can be used:
+
+```python
+class ImageEventPrinter(pylon.ImageEventHandler):
+    def OnImagesSkipped(self, camera, countOfSkippedImages):
+        print("OnImagesSkipped event for device ", camera.GetDeviceInfo().GetModelName())
+        print(countOfSkippedImages, " images have been skipped.")
+        print()
+
+    def OnImageGrabbed(self, camera, grabResult):
+        print("OnImageGrabbed event for device ", camera.GetDeviceInfo().GetModelName())
+
+        # Image grabbed successfully?
+        if grabResult.GrabSucceeded():
+            print("SizeX: ", grabResult.GetWidth())
+            print("SizeY: ", grabResult.GetHeight())
+            img = grabResult.GetArray()
+            print("Gray values of first row: ", img[0])
+            print()
+        else:
+            print("Error: ", grabResult.GetErrorCode(), grabResult.GetErrorDescription())
+```
+
+And in this case we register it with the following line:
+
+```python
+camera.RegisterImageEventHandler(ImageEventPrinter(), pylon.RegistrationMode_Append, pylon.Cleanup_Delete)
+```
+
+As we can see, with this approach the camera object itself knows what to do when an image is skipped or grabbed. We could, for example, save every image to the hard drive, or do some analysis and compression, etc. 
+
 ## Working with buffers
+So far we have used the camera in its most simple setting, which is acquiring a finite number of images. However, if we want to acquire a movie we will need to keep up reading with the camera and doing something with the images we get. Pylon implements a ring buffer that we can use to do whatever we desire with each frame. 
