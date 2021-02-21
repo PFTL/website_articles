@@ -1,18 +1,23 @@
 # Acquiring images from Basler Cameras
 
 ## Installing
-Basler cameras require two components to work with Python. First, the [Pylon software suite](https://www.baslerweb.com/en/sales-support/downloads/software-downloads/#type=pylonsoftware;language=all;version=all), which includes Pylon Viewer, a program to quickly acquire images from the cameras, and also the libraries to build custom software. In the download page, be sure to select the package for your operating system and architecture. 
-
-After installing Pylon, we can start the Pylon Viewer. This program allows us to test the camera, acquire images, and configure it. Testing whether we can acquire images is particularly important for Linux users, since accessing USB ports may require additional permissions depending on the system configuration. Also, the Pylon Viewer is a great starting point for finding out the name of the functions and parameters we may need to change in our programs. 
-
-After Pylon is installed and working, we must install PyPylon, which is the Python wrapper for the Pylon SDK. We must get a release from the [Github repository](https://github.com/Basler/pypylon/releases). Bear in mind that PyPylon sometimes lags behind regarding Python releases. Be sure you are using a version of Python compatible with the PyPylon wheel available. To install the release, we can simply run the following (ideally inside a virtual environment):
+To work with Basler cameras using Python, we must install the PyPylon package, which is the Python wrapper for the Pylon SDK. Basler's team improved the installation scripts of the package in the last few months, and is now possible to install as any other package:
 
 ```bash
-pip install <pylon_wheel>.whl
+pip install pypylon
 ```
 
+Older releases of the code, required to install other dependencies first and then getting a realease of pypylon from the [Github repository](https://github.com/Basler/pypylon/releases). This is still possible in case we need to work with specific versions, for example when maintaining legacy code. 
+
+Although PyPylon is all what is required to work with the cameras, in this tutorial we are also going to use the [Pylon software suite](https://www.baslerweb.com/en/sales-support/downloads/software-downloads/#type=pylonsoftware;language=all;version=all), which includes Pylon Viewer, a program to quickly acquire images from the cameras. In the download page, be sure to select the package for your operating system and architecture. 
+
+Pylon Viewer allows us to test the camera, acquire images, and configure it. Testing whether we can acquire images is important to rule out other problems. For example, on Linux systems accessing USB ports may require additional permissions. Pylon Viewer is also a great starting point for finding out the names of the functions and parameters we may need to change in our programs. 
+
 ### Problems with PyPylon installation
-I have found that sometimes there is a mismatch between the latest Pylon version and the released PyPylon wheel available to download. Even if this does not raise problems during installation, it may be that we face an error like the following when running the examples of this tutorial:
+!!!note 
+    PyPylon is evolving quickly, and some of the issues I highlight here may disappear on later releases. In any case I have decided to keep them since they may provide useful insight to some programmers.  
+
+I have found that sometimes there is a mismatch between the latest Pylon version and the released PyPylon wheel available to download. Even if this does not raise problems during installation, it may happen that we face an error like the following when running the examples of this tutorial:
 
 ```bash
 ImportError: cannot import name '_pylon' 
@@ -32,7 +37,7 @@ $ python setup.py install
 ```
 
 ## Getting Started
-When getting started, we must make sure that we can identify the camera we want to work with. This is not only useful for practical matters, but it is also useful to start understanding the patterns that the drivers require. We can run the following code:
+When getting started, we must make sure that we can identify the camera we want to work with. This is not only useful for practical matters, but it is also the first step to start understanding the patterns that drivers impose. We can run the following code:
 
 ```python
 from pypylon import pylon
@@ -44,13 +49,13 @@ for device in devices:
     print(device.GetFriendlyName())
 ```
 
-Which will generate a list of the cameras connected to our computer, similar to what we see with the PylonViewer program. In my case, the output is:
+Which will generate a list of the cameras connected to our computer, similar to what we see with the PylonViewer program. The output will depend on what camera is connected to the computer, but it will look like the following:
 
 ```bash
 Basler a2A1920-160umBAS (40063823)
 ```
 
-The code above starts by creating a *transport layer* instance, and enumerating the devices it has access to. According to the manual, the transport layer is an abstraction of the physical connection between the camera and the computer (i.e. USB, Camera Link, etc.). Its main purpose is to find and manage the life cycle of the cameras. The method ``EnumerateDevices`` returns a tuple containing information of each connected camera. 
+Let's start by understanding the the code that generated the output. It starts by creating a *transport layer* instance, and enumerating the devices to which it has access. According to the manual, the transport layer is an abstraction of the physical connection between the camera and the computer (i.e. USB, Camera Link, etc.). Its main purpose is to find and manage the life cycle of the cameras. The method ``EnumerateDevices`` returns a tuple containing information of each connected camera. 
 
 Bear in mind that PyPylon is built using Swig, a library that allows to wrap C code into Python automatically. If we would print ``device`` instead of its friendly name, we would get an output like this:
 
@@ -63,7 +68,7 @@ Which is not particularly useful. Each object returned by the enumeration of the
 In many cases we have only one camera, and the rest of the article will proceed on that assumption. If it is not the case, we can address the camera we want by using its unique properties. 
 
 ## Acquiring an Image
-If we are working with a camera, the first thing we may want to do is to acquire an image. We can create an ``InstantCamera`` object by running the following code:
+If we are working with a camera, the first thing we may want to do is to acquire an image. We can create an ``InstantCamera`` object by running the following:
 
 ```python
 tl_factory = pylon.TlFactory.GetInstance()
@@ -71,11 +76,11 @@ camera = pylon.InstantCamera()
 camera.Attach(tl_factory.CreateFirstDevice())
 ```
 
-The code above consists of two steps. After getting the instance of the transport layer, we create an ``InstantCamera`` object. Basler provides these objects as a way of simplifying our work with their cameras, including handling the device life cycle, creating event callbacks, and physical device removal. If we are developing a highly specialized application, we may want to dive into Pylon's Device objects, which are not covered in this article. 
+Which consists of two steps. After getting the instance of the transport layer, we create an ``InstantCamera`` object. Basler provides these objects as a way of simplifying our work with their cameras, including handling the device life cycle, creating event callbacks, and physical device removal. If we are developing a highly specialized application, we may want to dive into Pylon's *Device objects*, which are not covered in this article. 
 
-Once the ``InstantCamera`` is instantiated, we proceed to attach the first available camera to it. Note that the code above is transparent to the underlying data transport layer. We can use USB or GigE cameras with the same pattern. It is also important to point out that the transport layer is responsible for creating the actual device while ``camera`` is a convenient interface to it. 
+Once the ``InstantCamera`` is instantiated, we proceed to attach the first available camera to it. Note that the code above is transparent to the underlying data transport layer. We can use USB or GigE cameras with the same pattern. It is also important to point out that the transport layer is responsible for creating the actual device while ``camera`` is a convenient interface to it. The connection between the wrapper object ``InstantCamera`` and the real device happens when we ``Attach`` it. 
 
-To acquire an image, we must follow few steps that are quite self-explanatory:
+To acquire an image, we must follow few steps that are self-explanatory:
 
 ```python
 camera.Open()
@@ -87,14 +92,14 @@ if grab.GrabSucceeded():
 camera.Close()
 ```
 
-We start by opening the camera. At this stage we establish the communication with the device and Pylon takes care of applying some basic configuration. When we ``StartGrabbing`` with a single integer argument, we are telling Pylon the number of frames we want to acquire. When the camera reaches that number of frames it will stop acquiring new ones. This method is one of the convenience methods provided by the InstantCamera objects. 
+We start by opening the camera. At this stage we establish the communication with the device and Pylon takes care of applying some basic configuration. When we ``StartGrabbing`` with a single integer argument, we are telling Pylon the number of frames we want to acquire. When the camera reaches that number of frames it will stop acquiring new ones. This method is one of the convenience methods provided by the ``InstantCamera`` objects. 
 
-In the code above, we grab only one frame. We retrieve the result, using a timeout of 2000 milliseconds, and we specify that if 2 seconds pass and there is no result, it would simply return to avoid raising an exception. The other option would have been using ``TimeoutHandling_ThrowException``. 
+In the code above, we grab only one frame. We retrieve the result, using a timeout of 2000 milliseconds, and we specify that if 2 seconds pass and there is no result, it would simply return. Another option would have been using ``TimeoutHandling_ThrowException``. 
 
-We check that the grab actually worked out, in which case we get the image using the ``GetArray`` method. The resulting ``img`` is a numpy array. We display the shape of the image and close the camera. Of course, we can also display the image, save it, etc. In any case, the most important first step is to be able to read from the camera. 
+We check that the grab actually worked by using the ``GrabSucceeded`` method and then we get the actual data using the ``GetArray`` method. The resulting ``img`` is a numpy array. We print the shape of the image and close the camera. This is a very limited example to get started, but nothing limits us to also show the image, save it, etc. In any case, the most important first step is to be able to get data from the camera. 
 
 ## Changing Parameters
-Once we are able to read from a device, the second most important step is to change the acquisition parameters. In the case of a camera, the exposure time is one of the most important ones. The ``InstantCamera`` interface allows us to change it with the following syntax:
+Once we are able to read from a device, the second most important step is to change the acquisition parameters. In the case of a camera, the exposure time is, probably, one of the most important ones. The ``InstantCamera`` interface allows us to change it with the following syntax:
 
 ```python
 camera.ExposureTime.SetValue(50000)
@@ -109,7 +114,7 @@ camera.ExposureTime = 50000
 Both examples generate the same effect, and show the difference between [functional or imperative programming](https://www.aquiles.me/functional_or_imperative_programming/). I, personally, believe the first one is clearer, since it will always raise an error if, for example, we use ``Exposure`` instead of ``ExposureTime``.
 
 ### Getting node information
-One of the reasons for favoring the imperative setting of the exposure time (i.e. using ``SetValue``) is that ``ExposureTime`` is more complex than a simple number attribute of the camera. One common issue when setting values to a device is that we should know the limits and units of what we are passing. Pylon in that regard is very transparent and robust. 
+One of the reasons for favoring the imperative setting of the exposure time (i.e. using ``SetValue``) is that ``ExposureTime`` is more complex than a simple number attribute of the camera. One common concern when setting values to a device are the limits and the units of each parameter we are changing. Pylon, in that regard, is very transparent and consistent. 
 
 ```python
 camera.Open()
@@ -126,8 +131,8 @@ camera.Close()
 
 It is possible to get the units of the ``ExposureTime``, as well as the current value, the minimum, and the maximum. The code above shows the two ways of getting the information, using methods such as ``GetUnit`` or attributes like ``Unit``. Again, this is a matter of personal preference and consistency through larger projects. 
 
-## PylonViewer  as documentation entry point
-The examples above are a great starting point, but the main problem is that they are limited. As soon as we want to do something slightly different, we will need to use a different approach. For example, we know the minimum and maximum value of the exposure time, but how do we know the minimum difference between possible values? Fortunately, Basler bundles the PylonViewer with their software package. Let's see what information it provides when we select the exposure time:
+## PylonViewer as documentation entry point
+The examples above are a great starting point, but the main problem is that they are limited. As soon as we want to do something slightly more complex, we will need to use a different approach. For example, we know the minimum and maximum value of the exposure time, but how do we know the minimum difference between possible values? Fortunately, Basler bundles the PylonViewer with their software package. Let's see what information it provides when we select the exposure time:
 
 ![](./_basler/pylon_viewer_01.png)
 
@@ -135,7 +140,7 @@ For every parameter that we can change in the camera, PylonViewer tells us what 
 
 ![](./_basler/pylon_viewer_02.png)
 
-The PylonViewer does not allow us to see how to retrieve that information, but if it is on the table it means it can be programmatically accessed. The PylonViewer gives us access to the Programmer's Guide if we click on the Help menu. Normally, the C++ guide is the easiest to translate into Python code. If we search for ``ExposureTime`` we will get several matches, but normally any ``Member List`` would be a good starting point. The information on ``ExposureTime`` may be a bit vague:
+The PylonViewer does not allow us to see how to retrieve that information, but if it is on the table it means it can be programmatically accessed. The PylonViewer gives us access to the Programmer's Guide if we click on the *Help menu*. Normally, the C++ guide is the easiest to translate into Python code. If we search for ``ExposureTime`` we will get several matches, but any ``Member List`` would be a good starting point. The information on ``ExposureTime`` may be a bit vague:
 
 ![](./_basler/pylon_manual_exposure_01.png)
 
@@ -146,7 +151,7 @@ But it provides a very important hint (highlighted in red above). The Exposure t
 Every parameter that belongs to this class will have plenty of available information, the exposure time is only one of them. For basic applications it may be slightly far-fetched, but it is important to learn how to navigate the documentation in order to get the relevant information out and how it translates to Python. 
 
 ## Acquiring in free-run mode
-With cameras, often we want to acquire images continuously, not just one frame. Free-run means that the camera will acquire frames one after the other until we tell it to stop. With Pylon cameras, this can be achieved by using the method ``StartGrabbing`` without specifying a maximum number of frames:
+With cameras, often we want to acquire images continuously, not just one frame. Free-run means that the camera will acquire frames one after the other until we tell it to stop. With ``InstantCamera``, this can be achieved by using the method ``StartGrabbing`` without specifying a maximum number of frames:
 
 ```python
 camera.Open()
@@ -165,9 +170,9 @@ print(f'Acquired {i} frames in {time.time()-t0:.0f} seconds')
 camera.Close()
 ```
 
-In this example, ``StartGrabbing`` receives a strategy of ``OneByOne``, which is equivalent to first-in, first-out. Frames are acquired in order and retrieved in order. We use the method ``IsGrabbing`` to check that the camera is actually acquiring data. Note that we are using only 100 milliseconds of timeout when retrieving the result. If the exposure time is longer than that, Pylon would raise an error. We could check it by combining this example with the previous one. 
+In this example, ``StartGrabbing`` receives a strategy of ``OneByOne``, which is equivalent to first-in, first-out. Frames are acquired in order and retrieved in order. We use the method ``IsGrabbing`` to check that the camera is actually acquiring data. Note that we are using only 100 milliseconds of timeout when retrieving the result. If the exposure time is longer than that, Pylon would raise an error. We can check it by combining this example with the previous one. 
 
-If grabbing data was successful, we increase a counter. We stop the loop if we reach to 100 frames, but we could have used any other approach to stop the program at some point. It is important to note that we stop the loop, but not the grabbing itself. The grabbing stops when the camera is closed, courtesy of the ``InstantCamera`` object. It is possible to use ``StopGrabbing`` to stop the camera acquisition. 
+If grabbing data was successful, we increase a counter. We stop the loop if we reach 100 frames, but any other approach to stop the program at a given point is valid. It is important to note that we stop the loop, but not the grabbing itself. The grabbing stops when the camera is closed, courtesy of the ``InstantCamera`` object. We can also use ``StopGrabbing`` to stop the camera acquisition. 
 
 ## Timeout when retrieving the result
 In the examples we've seen so far, we have set everything in order to avoid problems. However, we are one very simple step away from getting into trouble. We are using an exposure time of 50ms and a timeout of 100ms when retrieving the result. It is worth exploring what would happen if the timeout is shorter than the exposure time. 
