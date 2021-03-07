@@ -1,13 +1,1 @@
-{
-  "theme": "obsidian",
-  "pluginEnabledStatus": {
-    "File explorer": true,
-    "Search": true,
-    "Quick switcher": true,
-    "Graph view": true,
-    "Backlinks": true,
-    "Command palette": true,
-    "Markdown format importer": true,
-    "Word count": true
-  }
-}
+{"theme":"obsidian","pluginEnabledStatus":{"File explorer":true,"Search":true,"Quick switcher":true,"Graph view":true,"Backlinks":true,"Command palette":true,"Markdown format importer":true,"Word count":true,"file-explorer":true,"global-search":true,"switcher":true,"graph":true,"backlink":true,"command-palette":true,"markdown-importer":true,"word-count":true,"open-with-default-app":true},"useTab":false}

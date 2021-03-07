@@ -4,6 +4,5 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="pftl_code" />
-    <orderEntry type="module" module-name="pypylon" />
   </component>
 </module>

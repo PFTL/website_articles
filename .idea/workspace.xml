@@ -20,7 +20,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c81a35fc-05d4-4f4f-b93a-6536f899662f" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/pftl_articles.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/pftl_articles.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../pftl_code/code/_classes/person.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/website_articles.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/website_articles.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/articles/_basler_cameras.md" beforeDir="false" afterPath="$PROJECT_DIR$/articles/_basler_cameras.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -39,8 +43,19 @@
       </list>
     </option>
   </component>
+  <component name="FlaskConsoleOptions" custom-start-script="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))">
+    <envs>
+      <env key="FLASK_APP" value="app" />
+    </envs>
+    <option name="myCustomStartScript" value="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))" />
+    <option name="myEnvs">
+      <map>
+        <entry key="FLASK_APP" value="app" />
+      </map>
+    </option>
+  </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../pftl_code" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="JupyterTrust" id="540cb033-1ee4-49dd-8967-b99402f0e1a5" />
   <component name="ProjectId" id="1W7lnLVU7JcOa9OU7KDRoYHDG5r" />
@@ -54,10 +69,10 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../pftl" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_package_manager_path" value="npm" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="preferences.editor" />
   </component>
   <component name="RunManager" selected="Python.aa">
     <configuration default="true" type="PyLettuceRunConfigurationType" factoryName="Lettuce">
@@ -330,6 +345,20 @@
       <workItem from="1608672113713" duration="62000" />
       <workItem from="1609145287542" duration="1802000" />
       <workItem from="1609790196575" duration="766000" />
+      <workItem from="1610051446103" duration="270000" />
+      <workItem from="1610293563969" duration="1851000" />
+      <workItem from="1610358049708" duration="1198000" />
+      <workItem from="1610781652346" duration="3978000" />
+      <workItem from="1610808031495" duration="1394000" />
+      <workItem from="1610868611092" duration="632000" />
+      <workItem from="1610956369669" duration="139000" />
+      <workItem from="1613818280068" duration="11471000" />
+      <workItem from="1614001814691" duration="1284000" />
+      <workItem from="1614006530046" duration="598000" />
+      <workItem from="1614070543422" duration="1861000" />
+      <workItem from="1614409351793" duration="1683000" />
+      <workItem from="1614412076031" duration="1203000" />
+      <workItem from="1614766149194" duration="47000" />
     </task>
     <servers />
   </component>
@@ -350,36 +379,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="LAST_COMMIT_MESSAGE" value="" />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="481" y="266" width="706" height="408" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1608657151547">
-      <screen x="72" y="27" width="1528" height="873" />
-    </state>
-    <state x="481" y="266" width="706" height="408" key="#com.intellij.fileTypes.FileTypeChooser/72.27.1528.873@72.27.1528.873" timestamp="1608657151547" />
-    <state x="618" y="245" width="424" height="496" key="FileChooserDialogImpl" timestamp="1608656724526">
-      <screen x="72" y="27" width="1528" height="873" />
-    </state>
-    <state x="618" y="245" width="424" height="496" key="FileChooserDialogImpl/72.27.1528.873@72.27.1528.873" timestamp="1608656724526" />
-    <state width="1482" height="216" key="GridCell.Tab.0.bottom" timestamp="1608642134849">
-      <screen x="72" y="27" width="1528" height="873" />
-    </state>
-    <state width="1482" height="216" key="GridCell.Tab.0.bottom/72.27.1528.873@72.27.1528.873" timestamp="1608642134849" />
-    <state width="1482" height="216" key="GridCell.Tab.0.center" timestamp="1608642134849">
-      <screen x="72" y="27" width="1528" height="873" />
-    </state>
-    <state width="1482" height="216" key="GridCell.Tab.0.center/72.27.1528.873@72.27.1528.873" timestamp="1608642134849" />
-    <state width="1482" height="216" key="GridCell.Tab.0.left" timestamp="1608642134848">
-      <screen x="72" y="27" width="1528" height="873" />
-    </state>
-    <state width="1482" height="216" key="GridCell.Tab.0.left/72.27.1528.873@72.27.1528.873" timestamp="1608642134848" />
-    <state width="1482" height="216" key="GridCell.Tab.0.right" timestamp="1608642134849">
-      <screen x="72" y="27" width="1528" height="873" />
-    </state>
-    <state width="1482" height="216" key="GridCell.Tab.0.right/72.27.1528.873@72.27.1528.873" timestamp="1608642134849" />
-    <state x="328" y="89" width="1016" height="742" key="SettingsEditor" timestamp="1608464366971">
-      <screen x="72" y="27" width="1528" height="873" />
-    </state>
-    <state x="328" y="89" width="1016" height="742" key="SettingsEditor/72.27.1528.873@72.27.1528.873" timestamp="1608464366971" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/pftl_articles$ac.coverage" NAME="ac Coverage Results" MODIFIED="1589390225969" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../pftl_code/code/42_descriptors/ad_inheritance" />
