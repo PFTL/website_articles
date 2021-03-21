@@ -4,13 +4,13 @@
     "type": "split",
     "children": [
       {
-        "id": "1636e2514c3ad6bb",
+        "id": "bcc907c1400294ce",
         "type": "leaf",
         "active": true,
         "state": {
           "type": "markdown",
           "state": {
-            "file": "_slots.md",
+            "file": "45_slots.md",
             "mode": "source"
           }
         }
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "_slots.md",
+                "file": "45_slots.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,6 +87,7 @@
   },
   "lastOpenFiles": [
     "_slots.md",
+    "44_basler_cameras.md",
     "02_HDF5_python.md"
   ]
 }
