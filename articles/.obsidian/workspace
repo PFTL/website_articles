@@ -4,13 +4,13 @@
     "type": "split",
     "children": [
       {
-        "id": "bcc907c1400294ce",
+        "id": "9eb0022fed9b2ef4",
         "type": "leaf",
         "active": true,
         "state": {
           "type": "markdown",
           "state": {
-            "file": "45_slots.md",
+            "file": "46_building_PFTL_daq.md",
             "mode": "source"
           }
         }
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "45_slots.md",
+                "file": "46_building_PFTL_daq.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -82,10 +82,11 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "lastOpenFiles": [
+    "Untitled.md",
+    "45_slots.md",
     "_slots.md",
     "44_basler_cameras.md",
     "02_HDF5_python.md"
