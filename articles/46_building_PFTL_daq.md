@@ -9,11 +9,11 @@ Arduino also provides a program called [Arduino IDE](https://www.arduino.cc/en/s
 
 The board manager is under the menu Tools/Boards:
 
-![Arduino Board Manager menu](arduino_boards.png)]
+![Arduino Board Manager menu](attachments/arduino_boards.png)]
 
 And the board manager will allow us to install the DUE:
 
-![](arduino_board_manager.png)
+![Installing the Due board on the arduino IDE](attachments/arduino_board_manager.png)
 
 To work with the board, we must load a special code to make it behave as we want. The code is [hosted here](https://github.com/PFTL/pythonforthelab/blob/458cd588e7d593dca15b58db1ab189e68d718c6b/extras/arduino_firmware/arduino_firmware.ino). Saving it to a file on the computer is enough. 
 
@@ -22,11 +22,11 @@ Open the code with the Arduino IDE, connect the board to the computer using the 
 ### Extra materials
 Besides the DUE, there are some **small electronics required**. We need a small breadboard. Something like this is enough, but anything will work:
 
-![](PC01771-40.jpg)
+![Small electronics breadboard](attachments/PC01771-40.jpg)
 
 We also need one LED. The color does not matter, 3 jumper cables that make it easy to connect the Arduino and the breadboard, and one resistance of 220 Ohm. Overall, what we want to build looks like the following:
 
-![](attachments/PFTL_DAQ_Schematic_bb.png)
+![Schematics of the circuit for Python for the Lab](attachments/PFTL_DAQ_Schematic_bb.png)
 
 Sourcing the electronics components will depend on the country. There are some suppliers like Farnell and RS Electronics that may be available. Still, in general, any electronics do-it-yourself shop will be able to provide the elements. 
 
