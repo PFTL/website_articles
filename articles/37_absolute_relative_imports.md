@@ -339,7 +339,7 @@ The first line appends the folder ``/home/user`` to the variable ``PYTHONPATH``.
 
 On **Windows**, we need to right-click on "Computer", select "Properties". In the "Advanced System Settings" there is the option "Environment variables". If `PYTHONPATH` exists, we can modify it, if it does not exist, we can create it by clicking on "New". Bear in mind that on Windows, you have to use `;` to separate directories, since ``:`` is part of the folder path (e.g.: ``C:\Users\Test\...``).
 
-Once you modified your Python Path, you can run the following code:
+We can check whether the modifications to the system environment variables worked by running the same code:
 
 ```python
 import sys
@@ -348,16 +348,9 @@ for path in sys.path:
     print(path)
 ```
 
-> You will see that `/home/user` appears at the top of the list of
-> directories. You can add another directory, for example:
+Adding information to the Python Path is a great way of developing a structure on your own computer, with code in different folders, etc. However, it is also important to note that it also makes harder to maintain. The environmental variables in one computer are not the same in another, Python may be loading legacy code from an abscure place on the computer. On the other hand, environmental variables are very useful in contexts like a web server, where the definitions can be loaded before running a program. 
 
-```bash
-export PYTHONPATH=$PYTHONPATH':/home/user/test'
-```
-
-And you will see it also appearing. Adding information to the Python Path is a great way of developing a structure on
-your own computer, with code in different folders, etc. It can also become hard to maintain. As a quick note, Python
-allows you to read environment variables at runtime:
+As a quick side-note, it is worth mentioning that Python allows to read environment variables at runtime:
 
 ```python
 import os
@@ -365,26 +358,16 @@ import os
 print(os.environ.get('PYTHONPATH'))
 ```
 
-Note that on Windows, the changes to environment variables are permanent, but on Linux and Mac you need to
-follow [extra steps](https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath)
-if you want them to be kept.
+Note that on Windows, the changes to environment variables are permanent, but on Linux and Mac we need to follow [extra steps](https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath) if we want them to stay.
 
-PYTHONPATH and Virtual Environment
-----------------------------------
+### PYTHONPATH and Virtual Environments
 
-There is a very handy trick when you work with virtual environments which is to modify environment variables when you
-activate or deactivate them. This works seamlessly on Linux and Mac, but Windows users may require some tinkering to
-adapt the examples below.
+When we work with virtual environments, we can modify environment variables when we activate or deactivate them. This works seamlessly on Linux and Mac, but Windows users may require some tinkering to adapt the examples below.
 
-If you inspect the **activate** script (located in the folder
-*venv/bin*) you can get inspiration about what is done with the `PATH`
-variable, for example. The first step is to store the old variable, before modifying it, then we append whatever we
-want. When we deactivate the virtual environment, we set the old variable back.
+If we inspect the **activate** script (located in the folder *venv/bin*), we can get inspiration about what is done with the ``PATH``variable, for example. The first step is to store the old variable, before modifying it, then we append whatever we want. When we deactivate the virtual environment, we set the old variable back.
 
-Virtual Environment has three hooks to achieve exactly this. Next to the
-**activate** script, you will see three more files, called
-*postactivate*, *postdeactivate* and *predeactivate*. Let's modify
-*postactivate*, which should be empty if you never used it before. Add the following:
+Virtual environments have three hooks to achieve this behavior. Next to the **activate** script, we can also see three files called *postactivate*, *postdeactivate* and *predeactivate*. We can modify
+*postactivate*, which should be empty, and add the following:
 
 ```bash
 PYTHONPATH_OLD="$PYTHONPATH"
@@ -393,70 +376,50 @@ export PYTHONPATH
 export PYTHONPATH_OLD
 ```
 
-Next time you activate your virtual environment, you will have the directory `/home/user` added to the PYTHONPATH. It is
-a good practice to go back to the original version of the python path once you deactivate your environment. You can do
-it editing the **predeactivate** file:
+Next time we activate the virtual environment, we will have the directory `/home/user` added to the ``PYTHONPATH``. It is a good practice to go back to the original version of the python path once we deactivate tne environment. We can do it directly in the **predeactivate** file:
 
 ```bash
 PYTHONPATH="$PYTHONPATH_OLD"
 unset $PYTHONPATH_OLD
 ```
 
-With this, we set the variable to the status it had before activating and we remove the extra variable we created. Note
-that in case you don't deactivate the environment, but simply close the terminal, the changes to the `PYTHONPATH` won't
-be saved. The *predeactivate* script is important if you switch from one environment to another and keep using the same
-terminal.
+We set the variable to the status it had before activating, and we remove the extra variable we created. Note that in case we don't deactivate the environment, but simply close the terminal, the changes to the `PYTHONPATH` won't be saved. The *predeactivate* script is important if you switch from one environment to another and keep using the same terminal.
 
-PYTHONPATH and PyCharm
-----------------------
+### PYTHONPATH and PyCharm
 
-If you are a user of [PyCharm](https://www.jetbrains.com/pycharm/), and probably most other IDE's around will be
-similar, you can change your environment variables directly from within the program. If you open the
-**Run** menu, and select **Edit Configurations** you will be presented with the following menu:
+Users of [PyCharm](https://www.jetbrains.com/pycharm/), and probably most other IDE's around will be
+similar, can change the environment variables directly from within the program. If we open the
+**Run** menu, and select **Edit Configurations** we will be presented with the following menu:
 
 <:image:PyCharm_config.png>
 
-In between the options, you can see, for example, "Add content roots to PYTHONPATH". This is what makes the imports work
-out of the box when you are in Pycharm but if you run the same code directly from the terminal may give you some issues.
-You can also edit the environment variables if you click on the small icon to the right of where it says "environment
-variables".
+In between the options we can see "Add content roots to PYTHONPATH". This is what makes the imports work out of the box when we are in Pycharm but if we run the same code directly from the terminal may give you some issues. We can also edit the environment variables if we click on the small icon to the right of where it says "environment variables".
 
-Keeping an eye on the environment variables can avoid problems in the long run. Especially if, for example, two
-developers share the computer, which is very often the case in laboratories, where on PC controls the experiment, and
-the software can be edited by multiple users. Perhaps one sets environment variables pointing to specific paths which
-are not what the second person is expecting.
+Keeping an eye on the environment variables can avoid problems in the long run. Especially if, for example, two developers share the computer. Although strange in many settings, lab computers are normally shared between people, and the software can be edited by multiple users. Perhaps one sets environment variables pointing to specific paths which are not what the second person is expecting.
 
-Absolute Imports
-================
+## Absolute Imports
 
-In the examples of the previous sections, we imported a function
-*downstream* in the file system. This means, that the function was inside of a folder next to the main script file. What
-happens if we want to import from a sibling module? Imagine we have the following situation:
+In the examples of the previous sections, we imported a function *downstream* in the file system. This means, that the function was inside a folder next to the main script file. However, we should also study what happens if we want to import from a sibling package. Imagine we have the following situation:
 
 ```bash
 ├── __init__.py
-├── mod_a
-│   ├── file_a.py
+├── pkg_a
+│   ├──  mod_a.py
 │   └── __init__.py
-├── mod_b
-│   ├── file_b.py
+├── pkg_b
+│   ├── mod_b.py
 │   └── __init__.py
 └── start.py
 ```
 
-We have a **start** file at the top-level directory, we have two modules, **mod\_a** and **mod\_b**, each with its
-own **\_\_init\_\_**
-file. Now, imagine that the function you are developing inside of
-**file\_b** needs something defined in **file\_a**. Following what we saw earlier, it is easy to import from **start**,
-we would do just:
+We have a **start** file in the top-level directory and two packages, **pkg\_a** and **pkg\_b**. Each one has its own **\_\_init\_\_** file. The question is how can we have access to the contents of **mod\_a** from withing **mod\_b**. From the **start** file, the import procedure is easy:
 
 ```python
-from mod_a import file_a
-from mod_b import file_b
+from pkg_a import mod_a
+from pkg_b import mod_b
 ```
 
-To have a concrete example, let's create some dummy code. First, in the file **file\_a**, let's develop a simple
-function:
+We can create some dummy code in order to have a concrete example. First, in the file **mod\_a**, we can create a function:
 
 ```python
 def simple():
@@ -466,17 +429,15 @@ def simple():
 Which, from the **start** file we can use as follows:
 
 ```python
-from mod_a.fila_a import simple
+from pkg_a.mod_a import simple
 
 simple()
 ```
 
-If we want to use the same function within the **file\_b**, the first thing we can try is to simply copy the same line.
-Thus, open **file\_b**
-and add the following:
+If we want to use the same function within the **mod\_b**, the first thing we can try is to simply copy the same line. Thus, in **mod\_b** we can try:
 
 ```python
-from mod_a.file_a import simple
+from pkg_a.mod_a import simple
 
 
 def bsimple():
@@ -484,59 +445,43 @@ def bsimple():
     simple()
 ```
 
-> And we can edit **start** to look as follows:
+To make it complete, we can trigger it directly from withing the **start** file:
 
 ```python
-from mod_b import file_b
+from pkg_b import mod_b
 
-file_b.bsimple()
+mod_b.bsimple()
 ```
 
-If we run start, we will get the output we were expecting:
+If we run it, we will get the output we were expecting:
 
 ```bash
-$ python start
+$ python start.py
 This is simple B
 This is simple
 ```
 
-However, and this is very big, HOWEVER, sometimes we don't want to run
-**start**, we want to run directly **file\_b**. If we run it as it is, we are expecting no output, but we can try it
-anyway:
+However, and this is very big, **HOWEVER**, sometimes we don't want to run**start**. Instead, we want to run directly **mod\_b**. If we try to run it, the following happens:
 
 ```bash
-$ python file_b.py
+$ python mod_b.py
 Traceback (most recent call last):
-  File "file_b.py", line 1, in <module>
-    from mod_a.file_a import simple
-ModuleNotFoundError: No module named 'mod_a'
+  File "mod_b.py", line 1, in <module>
+    from pkg_a.mod_a import simple
+ModuleNotFoundError: No module named 'pkg_a'
 ```
 
-And here you start to realize the headaches that the importing in Python can generate as soon as your program gets a bit
-more sophisticated. What we are seeing is that depending on where in the file system we run Python, it will understand
-what `mod_a` is. If you go back to the previous sections and see what we discussed about the Path used for searching
-modules, you will see that the first path is the current directory. When we run **start**, we are triggering Python from
-the root of our project and therefore it will find **mod\_a**. If we enter to a sub-directory, then it will no longer
-find it.
+And here we start to realize the headaches that the importing in Python can generate as soon as the program gets a bit more sophisticated. In the end, the error was expected. When we run ``python mod\_b.py``, Python will try to find ``pkg\_a`` in the same folder, and not one level up. When we trigger ``start`` there is no problem, because from that directory both ``pkg\_a`` and ``pkg\_b`` are visible. 
 
-The same happens if we trigger python from any other folder:
+The same problem will appear if we trigger python from any other location in the computer:
 
 ```bash
 $ python /path/to/project/start.py
 ```
 
-Based on what we have discussed earlier, can you think of a solution to prevent the errors?
+What we did in the examples above is called **absolute imports**. It means that we specify the full path to the module we want to import. What we have to remember is that the folder from which you trigger Python is the first place where the program looks for modules. Then it goes to the paths stored in `sys.path`. If we want the code to work, we need to be sure that Python knows where **pkg\_a** and **pkg\_b** are stored.
 
-What we are doing in the examples above is called **absolute imports**. This means that we specify the full path to the
-module we want to import. What you have to remember is that the folder from which you trigger Python is the first place
-where the program looks for modules. Then it goes to the paths stored in `sys.path`. So, if we want the code above to
-work, we need to be sure that Python knows where **mod\_a** and
-**mod\_b** are stored.
-
-The proper way would be to include the folder in the **PYTHONPATH**
-environment variable, as we explained earlier. A *dirtier* way would be to append the folder at runtime, we can add the
-following lines to
-**file\_by.py**:
+The proper way would be to include the folder in the **PYTHONPATH** environment variable, as we explained earlier. A *dirtier* way would be to append the folder at runtime, we can add the following lines to **mod\_b.py**:
 
 ```python
 import os
@@ -545,144 +490,98 @@ import sys
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_PATH)
 
-from mod_a.file_a import simple
+from pkg_a.mod_a import simple
 ```
 
-This is very similar to what we have done earlier. The important line is the highlighted, it shows you a way of getting
-the full path to the folder one level above where the current file (**file\_b.py**) is. Note that you need to append to
-the `sys.path` before you try to import
-`mod_a`, or it will fail such as before.
+This is very similar to what we have done earlier. It is important to highlight that the definition of ``BASE_PATH`` is the full path to the folder one level above where the current file (**mod\_b.py**) is. Note also that we need to append to the `sys.path` before we try to import ``pkg_a``, or it will fail in the same way it did before.
 
-If you think about this approach, you can quickly notice that it has several drawbacks. The most obvious one is that you
-should add those lines to every single file you are working with. Imagine that later you develop **mod\_c** which
-depends also on **mod\_a**, you will need to append the folder to the path again, etc. This quickly becomes a nightmare.
-
-Another problem with our current approach is that we are specifying the name of the module, but not the package to which
-it belongs. This connects back to what we did at the beginning of the article. Modules that belong to packages sometimes
-have the same names even if they are very different. Imagine you would like to develop a module called
-`string`. Perhaps you are a theoretical physicist working on string theory. If you have code that looks like this:
+If we think for a second about this approach, we can quickly notice that it has several drawbacks. The most obvious one is that we should add those lines to every single file you are working with. Another problem is that we are adding a folder that contains many packages, which can give some collisions. Imagine we are a theoretical physicists working on string theory and we develop a module called ``string``. The code would look like this:
 
 ```python
 from string import m_theory
 ```
 
-It will give you problems because `string` belongs to Python's standard library. It can also happen quite often that you
-develop two different packages and both have some modules with the same name. In the end, it is hard to come up with
-unique names, and things like *config*, *lib*,
-*util*, etc. are quite descriptive.
+And it will give us problems because `string` belongs to Python's standard library. 
 
-A better approach is to develop projects always in their own folder. The structure would be like this:
+Therefore, it is always better to develop projects in their own folder, even if that forces a bit of a name repetition. In the very simple case we are dealing with here, the structure would be like this:
 
 ```bash
 code
-├── pckg_a
-│   └── file_a.py
-├── pckg_b
+├── pkg_a
 │   ├── docs
-│   │   ├── conf_complete.py
-│   │   └── output
-│   │       └── output.txt
-│   └── mod_a
-│       ├── factorial.py
+│   └── pkg_a
 │       ├── __init__.py
-│       └── people.py
-└── pckg_c
-    ├── another.py
-    ├── __init__.py
-    ├── mod_a
-    │   ├── file_a.py
-    │   └── __init__.py
-    ├── mod_b
-    │   ├── file_b.py
-    │   └── __init__.py
-    └── start.py
+│       └── mod_a.py
+└── pkg_b
+    ├── docs
+    └── pkg_b
+        ├── __init__.py
+        └── mod_b.py
 ```
 
-In the folder tree above, you can see a base folder called **code**. Inside there are different packages, *a*, *b*,
-and *c*. If you check
-**pckg\_c** you will notice that it contains the code we were discussing in this tutorial. There are several advantages
-to working in this way. First, you can add just the folder **code** to the PYTHONPATH and you will have all your
-packages immediately available. The other advantage is that now you can import modules without risking mistakes:
+In the folder tree above we have a base folder **code**. Inside there are two packages, *a* and *b*. Although the name of the folders repeat (we have twice **pkg_a**, twice **pkg_b**, for example), there are several advantages to working in this way. The most important one is the granularity. We can add ``code/pkg_a`` or ``code/pkg_b`` to the ``PYTHONPATH``. Having control is always better than getting blanket results. 
 
-```python
-from pckg_b import mod_a as one_module
-from pckg_c import mod_a as two_module
-```
+The most important thing to remember is that in Python, absolute is *relative*. While importing, we are not specifying a path in the file system, but rather an import path. Therefore, the imports are always *relative* to the PYTHONPATH, even if called *absolute*.
 
-Now you see that it is very clear what module you are importing, even though they are both called `mod_a`. Remember,
-absolute imports mean that you define the full path of what you want to import. However, in Python, full is *relative*.
-You are not specifying a path in the file system, but rather an import path. Therefore, it is impossible to think about
-absolute imports without also considering the PYTHONPATH.
+## Relative Imports
 
-Relative Imports
-================
-
-Another option for importing modules is to define the relative path. Let's continue building on the example from the
-previous section. Imagine you have a folder structure like this:
+Another option for importing modules is to define the *relative* path. We can continue building on the example from the previous section. Imagine We have a folder structure like this:
 
 ```bash
 code
-├── mod_a
-│   ├── file_a.py
+├── pkg_a
+│   ├── mod_a.py
 │   └── __init__.py
-├── mod_b
-│   ├── file_b.py
+├── pkg_b
+│   ├──  mod_b.py
 │   ├── __init__.py
-│   └── mod_a
-│       ├── file_c.py
+│   └── pkg_a
+│       ├──  mod_c.py
 │       └── __init__.py
 └── start.py
 ```
 
-Note that in this example, we are placing the files within a folder called **code**, which will be relevant later on.
-Each `file_X.py`
-defines a function called `function_X` (where X is the letter of the file). The function simply prints the name of the
-function. It is a very simple example to show how this structure works. By not it should be clear that if you would like
-to import `function_c` from `file_c` in the
-`start.py` file, you would simply do the following:
+Let's assume that each `mod_X.py` defines a function called `function_X` (where X is the letter of the file). The function simply prints the name of the function. It should be clear that if we want to import `function_c` from `file_c`, the `start.py` file should look like:
 
 ```python
-from mod_b.mod_a.file_c import function_c
+from pkg_b.pkg_a.mod_c import function_c
 ```
 
-The situation becomes more interesting when you want to import
-`function_a` into `file_b`. It is important to pay attention because there are two different `mod_a` defined. If we add
-the following to
-`file_b`:
+The situation becomes more interesting when we want to import ``function_a`` in ``mod_b``. It is important to pay attention because there are two different `pkg_a` defined in our program. If we add
+the following to ``mod_b``:
 
 ```python
-from mod_a.file_c import function_c
+from pkg_a.mod_c import function_c
 ```
 
-It would work, regardless of how you run the script:
+It would work, regardless of how we run the script:
 
 ```bash
-$ python mod_b/file_b.py
-$ cd mod_b
-$ python file_b.py
+$ python pkg_b/mod_b.py
+$ cd pkg_b
+$ python mod_b.py
 ```
 
-But this is not what we wanted! We want `function_a` from `file_a`. If we, however, add the following to `file_b`:
+But this is not what we wanted! We want `function_a` from `mod_a`. If we, however, add the following to `mod_b`:
 
 ```python
-from mod_a.file_a import function_a
+from pkg_a.mod_a import function_a
 ```
 
 We would get the following error:
 
 ```bash
-$ python mod_b/file_b.py
+$ python pkg_b/mod_b.py
 Traceback (most recent call last):
-  File "mod_b/file_b.py", line 1, in <module>
-    from mod_a.file_a import function_a
-ImportError: No module named file_a
+  File "pkg_b/mod_b.py", line 1, in <module>
+    from pkg_a.mod_a import function_a
+ImportError: No module named pkg_a
 ```
 
-So, now is where relative imports come into play. From `file_b`, the module we want to import is one folder up. In
-principle, it would be enough to write the following:
+In this case is where relative imports become very handy. From **mod_b**, the module we want to import is one folder up. To indicate that, we can use the ``..`` notation in Python: 
 
 ```python
-from ..mod_a.file_a import function_a
+from ..pkg_a.mod_a import function_a
 
 
 def function_b():
@@ -693,68 +592,41 @@ def function_b():
 function_b()
 ```
 
-Most tutorials end at this point. They explain that the first `.` means this directory, while the second means going one
-level up, etc. However, if you run the file, there will be problems. If you are still using Python 2 (STRONGLY
-discouraged!), you would get the following error:
+Generally speaking, the first ``.`` means *in this directory*, while the second means going one
+level up, etc. However, if we run the file, there will be problems. If we run the file, we get the following error:
 
 ```bash
-$ cd mod_b/
-$ python file_b.py
+$ python3 mod_b.py
 Traceback (most recent call last):
-  File "file_b.py", line 1, in <module>
-    from ..mod_a.file_a import function_a
-ValueError: Attempted relative import in non-package
-```
-
-This error means that you can't simply run the file as if it would be a script. You have to tell Python that it is a
-package. The way of running a script as if it would be a package is to add a `-m`, you need to be one folder up to work:
-
-```bash
-$ python -m mod_b.file_b
-```
-
-**Python 3** users can simply run the file as always, and you will get the following error:
-
-```bash
-$ python3 file_b.py
-Traceback (most recent call last):
-  File "file_b.py", line 1, in <module>
-    from ..mod_a.file_a import function_a
+  File "mod_b.py", line 1, in <module>
+    from ..pkg_a.mod_a import function_a
 ValueError: attempted relative import beyond top-level package
 ```
 
-It doesn't matter if you change folders, if you move one level up, you will get the same problem:
+It doesn't matter if we change folders, if we move one level up, we will get the same problem:
 
 ```bash
-$ python3 mod_b/file_b.py
+$ python3 pkg_b/mod_b.py
 Traceback (most recent call last):
-  File "mod_b/file_b.py", line 1, in <module>
-    from ..mod_a.file_a import function_a
+  File "mod_b.py", line 1, in <module>
+    from ..pkg_a.mod_a import function_a
 ValueError: attempted relative import beyond top-level package
 ```
 
-At some point, this becomes nerve-wracking. It doesn't matter if you add folders to the PATH, create **\_\_init\_\_.py**
-files, etc. It all boils down to the fact that you are not treating your files as a package.
-**Python 2** was showing a different error message that could point into the direction of solving the problem, but
-for **Python 3** it became slightly more cryptical. To instruct Python to run your file as part of a package, you would
-need to do the following:
+At some point, this becomes nerve-wracking. It doesn't matter if we add folders to the PATH, create **\_\_init\_\_.py** files, etc. It all boils down to the fact that we are not treating our files as a module when we run it. To instruct Python to run the file as part of a package, we would do:
 
 ```bash
-$ python3 -m code.mod_b.file_b
+$ python3 -m code.pkg_b.mod_b
 This is function_b
 This is function_a
 ```
 
-Bear in mind that the only way of running the code like this is if python knows where to find the folder `code`. And
-this brings us back to the discussion of the PYTHONPATH variables. If you are in the folder that contains `code` and run
-Python from there, you won't see any problems. If you, however, are in any other folder on your computer, Python will
-follow to usual rules to try to understand where `code` is.
+Bear in mind that the only way of running the code like this is if python knows where to find the folder `code`. And this brings us back to the discussion of the PYTHONPATH variables. If we are in the folder that contains `code` and run Python from there, we won't see any problems. If we, however, are in any other folder, Python will follow to usual rules to try to understand where `code` is.
 
-There is one more detail with relative imports. Imagine that **file\_c**
-has the following:
+There is one more important detail to discuss with relative imports. We can imagine that **mod\_c** has the following code:
 
 ```python
-from ..file_b import function_b
+from ..mod_b import function_b
 
 
 def function_c():
@@ -765,29 +637,20 @@ def function_c():
 function_c()
 ```
 
-Since **file\_c** is deeper, we can try to run it in different ways:
+Since **mod\_c** is deeper in the tree, we can try to run it in different ways:
 
 ```bash
-$ python -m code.mod_b.mod_a.file_c
-$ python -m mod_b.mod_a.file_c
+$ python -m code.pkg_b.pkg_a.mod_c
+$ python -m pkg_b.pkg_a.mod_c
 ```
 
-However, the second option is going to fail. **file\_c** is importing
-**file\_b** which in turn is importing **file\_a**. Therefore, Python needs to be able to go all the way to the root
-of `code`. This is, however, not always the case. It depends on how the code was developed. Bear in mind that imports
-work equally well if you import `code` into another project, provided that Python knows where to find it:
+However, the second option is going to fail. **mod\_c** is importing **mod\_b** which in turn is importing **mod\_a**. Therefore, Python needs to be able to go all the way to the root folder **code**. Therefore, when we plan our code, we should be mindful not only on how to write it, but on how the program is meant to be used. 
 
-```pycon
->>> from code.mod_b.mod_a.file_c import function_c
-```
-
-The last detail is that you can't mix relative imports and what we have done at the beginning of this section. If you
-add the following to
-**file\_b**:
+The last detail to cover is that we can't mix relative and absolute imports. For example, the following won't work:
 
 ```python
-from ..mod_a.file_a import function_a
-from mod_a.file_c import function_c
+from ..pkg_a.mod_a import function_a
+from pkg_a.mod_c import function_c
 
 
 def function_b():
@@ -798,33 +661,31 @@ def function_b():
 function_b()
 ```
 
-You will get the following error:
+We will get the following error:
 
 ```bash
-$ python -m code.mod_b.file_b
+$ python -m code.pkg_b.mod_b
 Traceback (most recent call last):
 [...]
-ModuleNotFoundError: No module named 'mod_a'
+ModuleNotFoundError: No module named 'pkg_a'
 ```
 
-When you decide to run your code as a module (using the `-m`), then you have to make all the imports explicit. One way
-of solving the problem with our code above would be to change one line:
+When we decide to run your code as a module (using the `-m`), then all the imports relative. One way
+of solving the problem would be to change the following:
 
 ```python
-from .mod_a.file_c import function_c
+from .pkg_a.mod_c import function_c
 ```
 
-Then it is clear that we want to import from `mod_a` which is in the same folder than the **file\_b**.
+In this way it becomes clear that we want are importing from `pkg_a` which is in the same folder as **mod\_b**.
 
-Mixing Absolute and Relative
-----------------------------
-
-This is possible. There is no secret to it, for example, we can change
-**file\_b.py** to look like this:
+## Mixing Absolute and Relative
+It is possible mixing relative and absolute imports without any secrets to it. We can change
+**mod\_b.py** like this:
 
 ```python
-from ..mod_a.file_a import function_a
-from code.mod_b.mod_a.file_c import function_c
+from ..pkg_a.mod_a import function_a
+from code.pkg_b.pkg_a.mod_c import function_c
 
 
 def function_b():
@@ -835,36 +696,21 @@ def function_b():
 function_b()
 ```
 
-And if we run the file, there won't be any issues:
+Mixing relative and absolute is definitely a possibility. The question, as almost always, is why would we do it. The fact that we can does not mean we should. 
 
-```bash
-$ python -m code.mod_b.file_b
-```
+## Absolute or Relative: Conclusions
 
-So, now you see that you can easily mix relative and absolute imports.
-
-Absolute or Relative: Conclusions
-=================================
-
-Deciding whether you want to use absolute imports or relative imports is up to your own taste. If you are developing a
-package that has a lot of modules nested to each other, using relative imports can make your code clearer. For example,
-this is how the same import would look like in the two different cases:
+Deciding whether we want to use absolute imports or relative imports is basically up to the taste of the developer or the rules established by the group. If we are developing a package that has a lot of sub-packages and modules with several layers of nesting, using absolute imports can make the code clearer. For example, this is how the same import would look like in the two different cases:
 
 ```python
-from package.module_1.module_2.module_3.file import my_function
-from .file import my_function
+from program.pkg_1.pkg_2.pkg_3.module import my_function
+from .module import my_function
 ```
 
-If you would be developing **file\_2** next to **file**, importing
-`my_function` can become very different depending on whether you go the absolute or the relative path.
+For some people the first line is much clearer, there are no doubts about what are we importing. But it can get tiresome to type the entire path all the time. However, it is important to consider that typing less is not the only factor at play here. 
 
-However, it is important to consider that typing less is not the only factor at play here. Remember, that once you use
-relative imports, you can't simply run your files using `python file_2.py`, you will need to use the `python -m`
-command, and it will mean that you will need to write the full path to the file within the package.
-
-Sometimes bigger programs can be executed in parts, to test the behavior and give a quick feeling of what the code does
-without running a full-fledged solution. Therefore, it is really up to the developer to have sensitivity and decide
+If we are planning on allowing some files to run directly we should be mindful about the requirements for the relative imports. If we have many modules with similar names, sometimes the explicit path makes the code much clearer. It is really up to the developer to have enough sensitivity to decide
 whether the absolute import or the relative import makes the code clearer and the execution easier.
 
 The example code for this article can be
-found [on Github](https://github.com/PFTL/website/tree/master/example_code/37_imports)
+found [on Github](https://github.com/PFTL/website_example_code/tree/master/pftl_code/code/37_imports)
